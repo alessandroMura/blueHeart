@@ -14,6 +14,7 @@ import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
@@ -47,9 +48,58 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     private int whatFragment;
     private float value=0;
     int i=0;
-    private int visibility_range=2048;
-    private float time;
+    private int visibility_range=1024;
+    private long time;
+    private Filter filter=new Filter();
+    private HeartyFilter.SavGolayFilter savgol =new HeartyFilter.SavGolayFilter(2);
+//    private float[] b = {0.124833263500246f, -0.0147795007798146f	,0.0155463255410650f,-0.0162850788192591f,	0.0169931136605428f,	-0.0176830876062519f	,0.0183106915740082f,	-0.0188378667509723f,	0.0192646168249830f,	-0.0198534349458432f	,0.0201969627538737f,	-0.0205401827407513f	,0.0208120793722991f,	-0.0209777437980776f	,0.0211198633224252f	,0.978834120938933f,	0.0211198633224252f,	-0.0209777437980776f,	0.0208120793722991f	,-0.0205401827407513f,	0.0201969627538737f,	-0.0198534349458432f,	0.0192646168249830f,	-0.0188378667509723f	,0.0183106915740082f,	-0.0176830876062519f	,0.0169931136605428f,	-0.0162850788192591f,	0.0155463255410650f,	-0.0147795007798146f,	0.124833263500246f};
+    private float[] bl={
 
+        0.021631479348453615252356740938921575435f,
+        0.001569763781708604592074474126661698392f,
+        -0.02424849434414637003309955787244689418f,
+        -0.044294715438973987498005868701511644758f,
+        -0.046595330095967085748398517353052739054f,
+        -0.023357294128489192175379685068037360907f,
+        0.025410520993913259663044001968046359252f,
+        0.09077207159594452567930034092569258064f,
+        0.156939822428210001836745846048870589584f,
+        0.206077518470970666442099172854796051979f,
+        0.224215221395552360972303063135768752545f,
+        0.206077518470970666442099172854796051979f,
+        0.156939822428210001836745846048870589584f,
+        0.09077207159594452567930034092569258064f,
+        0.025410520993913259663044001968046359252f,
+        -0.023357294128489192175379685068037360907f,
+        -0.046595330095967085748398517353052739054f,
+        -0.044294715438973987498005868701511644758f,
+        -0.02424849434414637003309955787244689418f,
+        0.001569763781708604592074474126661698392f,
+        0.021631479348453615252356740938921575435f
+
+};
+    private float [] bh={-0.03994945068476829508341552354977466166f,
+            -0.046805011725188146176623860128529486246f,
+            -0.05603752617720196560480161451778258197f,
+            -0.069229492237551690236863066729711135849f,
+            -0.089772424989753268897985094554314855486f,
+            -0.1264848981698339092094585112135973759f,
+            -0.211702750371156211972589744618744589388f,
+            -0.636451757755276070760430684458697214723f,
+            0.636451757755276070760430684458697214723f,
+            0.211702750371156211972589744618744589388f,
+            0.1264848981698339092094585112135973759f,
+            0.089772424989753268897985094554314855486f,
+            0.069229492237551690236863066729711135849f,
+            0.05603752617720196560480161451778258197f,
+            0.046805011725188146176623860128529486246f,
+            0.03994945068476829508341552354977466166f
+
+    };
+    private float[] a = {1f};
+    private HeartyFilter  lp=new HeartyFilter(bl,a);
+    private HeartyFilter  hp=new HeartyFilter(bh,a);
+    private HeartyFilter.WndIntFilter mf=new HeartyFilter.WndIntFilter(5);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -236,6 +286,8 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
             YAxis leftAxis = chart.getAxisLeft();
             leftAxis.setAxisMaximum(2000f);
             leftAxis.setAxisMinimum(-2000f);
+
+//            XAxis xAxis=chart.getXAxis();
 
 
             // limit the number of visible entries
@@ -533,6 +585,19 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         return -1;
     }
 
+    private long tryGetClock(SewBluetoothDevice s){
+
+        try {
+
+            long t =s.getClock();
+            return t;
+
+        } catch (CommunicationException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
     private void runDataStreamThread() {
 
         final Runnable runnable3 = new Runnable() {
@@ -548,6 +613,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
                         while (stream) {
                             RegularDataBlock[] rdbs = (RegularDataBlock[]) sewDevice.getDataBlocks();
+//                            time=tryGetClock(sewDevice);
 
 
 
@@ -556,12 +622,28 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                                 if (rdbs[c].getId() == 1) {
 
 
-                                    float[] signal = rdbs[c].getValues();
+                                    float [] signal = rdbs[c].getValues();
+
                                     for (int z = 0; z < signal.length; z++) {
+
 
                                         Log.v("sewdevice", "Value:  " + String.valueOf(signal[z]) + "----" + String.valueOf(z));
 //                                        Log.v("sewdevice", "Time:  " + String.valueOf(time) + "----" + String.valueOf(time));
-                                        value = signal[z];
+//                                        float highVal = filter.HighPassFilter(filter.LowPassFilter(signal[z]));
+//                                        float diffVal = filter.diffFilterNext(highVal) ;
+//                                        float sqVal = filter.squareNext(diffVal) ;
+//                                        float movingWindVal = filter.movingWindowNext(highVal) ;
+//                                        float sa=savgol.next(signal[z]);
+//                                        float mF=mf.next(signal[z]);
+                                        float sv =savgol.next(signal[z]);
+                                        float lowVal=lp.next(sv);
+                                        float highVal=hp.next(lowVal);
+
+
+                                        value=highVal;
+//
+
+
                                         streamtofeed = true;
                                         onSensorc();
 
