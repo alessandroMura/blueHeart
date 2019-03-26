@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="modes_array">
+        <item>-Time Domain</item>
+        <item>-Frequency Domain (Magnitude)</item>
+        <item>-Frequency Domain (Phase)</item>
+        <item>-Poincare Plot RR(n)-RR(n+1)</item>
+        <item>-Lagged Poincare Plot n:(1-10)</item>
+    </string-array>
+</resources>

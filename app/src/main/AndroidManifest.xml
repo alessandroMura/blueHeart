@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.example.blueheart">
+
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+
+    <application
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:theme="@style/AppTheme"
+        tools:ignore="GoogleAppIndexingWarning">
+
+        <!--Main Activity-->
+        <activity android:name=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+
+        <!--Device list-->
+        <activity
+            android:name=".deviceListActivity"
+            android:label="@string/activity_device_list"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.blueheart.MainActivity" />
+        </activity>
+
+        <!--Choose analysis tipe-->
+        <activity android:name=".chooseAnalysisTypeActivity"
+            android:label="Choose Analysis Type"
+            >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.blueheart.deviceListActivity" />
+        </activity>
+
+        <!--Real time analysis-->
+        <activity android:name=".realTimeAnalysisActivity"
+            android:label="Real Time Analysis"
+            >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.blueheart.chooseAnalysisTypeActivity"
+                />
+        </activity>
+
+        <!--Record and send login-->
+        <activity android:name=".record_and_send_login"
+            android:label="Login"
+            >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.blueheart.chooseAnalysisTypeActivity"
+                />
+        </activity>
+
+
+
+        <!--Record and send -->
+        <activity android:name=".recordAndSendActivity"
+            android:label="Record and Send"
+            android:parentActivityName=".record_and_send_login"
+            >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.blueheart.record_and_send_login"
+                />
+        </activity>
+
+
+
+
+    </application>
+
+</manifest>

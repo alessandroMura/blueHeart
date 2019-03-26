@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".frequencyPhaseFragment"
+
+    >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+
+        >
+
+        <TextView
+            android:id="@+id/freqm"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="@string/frequency_phase_frag_name"
+            android:gravity="center"
+            />
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            >
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/option1_size"
+                android:gravity="left"
+                />
+            <Button
+                android:id="@+id/minus_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="-"
+
+                />
+            <TextView
+                android:id="@+id/size_fft"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:hint="Multiples of 2"
+
+                />
+
+            <Button
+                android:id="@+id/plus_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="+"
+
+
+
+                />
+
+        </LinearLayout>
+
+
+    </LinearLayout>
+
+</FrameLayout>

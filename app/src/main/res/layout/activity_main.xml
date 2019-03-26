@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".MainActivity"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+
+
+    >
+
+    <Button
+        android:id="@+id/btOn"
+        android:text="@string/bt_turn_on"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+         />
+    <Button
+        android:id="@+id/btOff"
+        android:text="@string/bt_turn_off"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+         />
+    <Button
+        android:id="@+id/btMakeDiscoverable"
+        android:text="@string/make_discoverable"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        />
+    <Button
+        android:id="@+id/device_list"
+        android:text="@string/device_list"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        />
+
+</LinearLayout>

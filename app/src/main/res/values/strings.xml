@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">blueheart</string>
+    <string name="bt_turn_on">Turn on Bluetooth</string>
+    <string name="bt_turn_off">Turn off Bluetooth</string>
+    <string name="make_discoverable">Make Device Discoverable</string>
+    <string name="device_list">Device list</string>
+    <string name="activity_device_list">DEVICE LIST</string>
+    <string name="real_time_button">Real Time Analysis</string>
+    <string name="record_and_send_button">Record and Send</string>
+    <string name="login_button">Login</string>
+
+    <string name="time_domain_frag_name">Time Domain</string>
+
+
+    <string name="frequency_magnitude_frag_name">Frequency Domain - Magnitude</string>
+    <string name="option1_size">FFT size: </string>
+
+
+    <string name="frequency_phase_frag_name">Frequency Domain - Phase</string>
+    <string name="poincare_frag_name">Poincare Plot</string>
+    <string name="lagged_poincare_frag_name">Lagged Poincare Plot</string>
+    <string name="time_samples">Samples</string>
+
+
+</resources>

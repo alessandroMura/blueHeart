@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="250dp"
+    tools:context=".timeDomainFragment"
+
+    >
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        >
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/time_samples"
+        android:gravity="left"
+        />
+    <Button
+        android:id="@+id/minus_button_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="-"
+
+        />
+    <TextView
+        android:id="@+id/time_samples"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:hint="Number"
+        />
+
+    <Button
+        android:id="@+id/plus_button_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="+"
+        />
+
+    </LinearLayout>
+</FrameLayout>
