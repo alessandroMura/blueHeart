@@ -35,18 +35,17 @@ import static com.example.blueheart.deviceListActivity.sewDevice;
 
 public class realTimeAnalysisActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener,parameterSend {
 
+//Graphic elements Initialization
+    Fragment timeDomainFrag,freqMagFrag,freqPhasFrag,poincarFrag,lagPoincarFrag;
+    Spinner spinner;
+    private LineChart chart;
 
 
     private static boolean buffered=true;
 
-    private LineChart chart;
-
-    Fragment timeDomainFrag,freqMagFrag,freqPhasFrag,poincarFrag,lagPoincarFrag;
-    Spinner spinner;
-
     private int whatFragment;
     private float value=0;
-    int i=0;
+    private int i=0;
     private int visibility_range=1024;
 
     private Filter filter=new Filter();
@@ -58,6 +57,21 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
 //    private HeartyFilter  lp=new HeartyFilter(bl,a);
 //    private HeartyFilter  hp=new HeartyFilter(bh,a);
+
+    private Thread thread0;
+    private Thread thread1;
+    private Thread thread2;
+    private Thread thread3;
+
+    private static int size=512;
+    private Complex complexArray[]=new Complex[size];
+    private Complex fftOut []=new Complex[size];
+    private float out []=new float[size/2];
+    private float in []=new float[size];
+
+
+    boolean canStream=true;
+    boolean streamtofeed;
 
 
     @Override
@@ -86,33 +100,23 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         setupChart();
         runDataStreamThread();
 
-
-
         spinner.setOnItemSelectedListener( new AdapterView.OnItemSelectedListener(){
             @Override
             public void onItemSelected(AdapterView<?> parent, View view,
                                        int pos, long id) {
-
-
                 showToast((String) parent.getItemAtPosition(pos));
                 switch (pos){
                     case 0:
                         whatFragment=0;
                         setFragment(timeDomainFrag);
-
-
                         break;
                     case 1:
                         whatFragment=1;
                         setFragment(freqMagFrag);
-
-
                         break;
                     case 2:
                         whatFragment=2;
                         setFragment(freqPhasFrag);
-
-
                         break;
                     case 3:
                         whatFragment=3;
@@ -122,24 +126,14 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                         whatFragment=4;
                         setFragment(lagPoincarFrag);
                         break;
-
                 }
             }
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
 
-            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) { }
         });
 
     }
-
-    public void setFragment(Fragment fragment){
-        FragmentTransaction fragtransaction=getSupportFragmentManager().beginTransaction();
-        fragtransaction.replace(R.id.fragment_frame,fragment);
-        fragtransaction.commit();
-
-    }
-
 
     public void setupSensor(){
         List<SewBluetoothDevice> bluetoothDeviceList = DeviceFinder.findPairedDevices("sew");
@@ -155,14 +149,13 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
     }
 
-//    public void setupSensor(){
-//        Log.d(TAG,"setupSensor:Initializing Sensor Services");
-//        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-//        Sensor sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-//        sensorManager.registerListener(realTimeAnalysisActivity.this, sensor,SensorManager.SENSOR_DELAY_FASTEST);
-//        Log.d(TAG,"setupSensor:Registered Accelerometer Listener");
-//
-//    }
+    public void setFragment(Fragment fragment){
+        FragmentTransaction fragtransaction=getSupportFragmentManager().beginTransaction();
+        fragtransaction.replace(R.id.fragment_frame,fragment);
+        fragtransaction.commit();
+
+    }
+
     private void setupChart(){
 
         chart = findViewById(R.id.chart);
@@ -182,15 +175,48 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         chart.getXAxis().setDrawAxisLine(false);
         LineData data = new LineData();
         chart.setData(data);
+
+    }
+
+    private void setData0() {
+
+        LineData data = chart.getData();
+        if (data != null) {
+            ILineDataSet set = data.getDataSetByIndex(0);
+            if (set == null) {
+                set = createSet();
+                data.addDataSet(set);
+            }
+
+            data.addEntry(new Entry(set.getEntryCount(), value), 0);
+            data.notifyDataChanged();
+
+            // let the chart know it's data has changed
+            chart.notifyDataSetChanged();
+
+            YAxis leftAxis = chart.getAxisLeft();
+
+            leftAxis.setAxisMaximum(maxr/2);
+            leftAxis.setAxisMinimum(minr/2);
+
+//            XAxis xAxis=chart.getXAxis();
+            // limit the number of visible entries
+            chart.setVisibleXRangeMaximum(visibility_range);
+
+            // move to the latest entry
+            chart.moveViewToX(data.getEntryCount()-100);
+
+            Legend l = chart.getLegend();
+            l.setEnabled(false);
+
+
+        }
     }
 
     private void setData(float[] in) {
 
         ArrayList<Entry> values = new ArrayList<>();
-
-
         for (int j=0;j<size/2;j++) {
-//
             values.add(new Entry(j, in[j]));
         }
 
@@ -215,55 +241,11 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         chart.moveViewToX(0f);
         chart.fitScreen();
 
-
         // let the chart know it's data has changed
        chart.invalidate();
         // get the legend (only possible after setting data)
         Legend l = chart.getLegend();
         l.setEnabled(false);
-    }
-    private void setData0() {
-
-        LineData data = chart.getData();
-
-        if (data != null) {
-
-            ILineDataSet set = data.getDataSetByIndex(0);
-            // set.addEntry(...); // can be called as well
-
-            if (set == null) {
-                set = createSet();
-                data.addDataSet(set);
-            }
-
-            data.addEntry(new Entry(set.getEntryCount(), value), 0);
-            data.notifyDataChanged();
-
-            // let the chart know it's data has changed
-            chart.notifyDataSetChanged();
-
-            YAxis leftAxis = chart.getAxisLeft();
-
-           leftAxis.setAxisMaximum(maxr/2);
-           leftAxis.setAxisMinimum(minr/2);
-
-//            XAxis xAxis=chart.getXAxis();
-
-
-            // limit the number of visible entries
-            chart.setVisibleXRangeMaximum(visibility_range);
-
-
-
-            // move to the latest entry
-            chart.moveViewToX(data.getEntryCount()-100);
-
-
-            Legend l = chart.getLegend();
-            l.setEnabled(false);
-
-
-        }
     }
 
     private LineDataSet createSet() {
@@ -277,15 +259,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         set.setDrawFilled(false);
         return set;
     }
-
-    private Thread thread0;
-    private Thread thread1;
-    private Thread thread2;
-    private static int size=512;
-    private Complex complexArray[]=new Complex[size];
-    private Complex fftOut []=new Complex[size];
-    private float out []=new float[size/2];
-    private float in []=new float[size];
 
     private void feedMultiple0(){
 
@@ -330,6 +303,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
 
     }
+
     private void feedMultiple1() {
 
         if (thread1 != null)
@@ -393,6 +367,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
         thread1.start();
     }
+
     private void feedMultiple2() {
 
         if (thread2 != null)
@@ -455,10 +430,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         thread2.start();
     }
 
-    private Thread thread3;
-    boolean canStream=true;
-    boolean streamtofeed;
-
     private void tryConnect(SewBluetoothDevice s){
         try {
             Log.v("sewdevice","Connecting....");
@@ -470,6 +441,34 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
             e.printStackTrace();
         }
 
+    }
+
+    private void tryDisconnect(SewBluetoothDevice s){
+        try {
+            Log.v("sewdevice","Disconnecting...");
+            s.disconnect();
+            Log.v("sewdevice","Disconnected");
+        } catch (CommunicationException e) {
+            e.printStackTrace();
+        } catch (DeviceException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private int isConnected(SewBluetoothDevice s){
+        try {
+            int stat;
+            Log.v("sewdevice","Checking Status...");
+            stat=s.getStatus();
+            Log.v("sewdevice","Status=  "+stat);
+            return stat;
+
+
+        } catch (CommunicationException e) {
+            e.printStackTrace();
+        }
+        return -1;
     }
 
     private void tryStream(SewBluetoothDevice s){
@@ -498,19 +497,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
     }
 
-    private void tryDisconnect(SewBluetoothDevice s){
-        try {
-            Log.v("sewdevice","Disconnecting...");
-            s.disconnect();
-            Log.v("sewdevice","Disconnected");
-        } catch (CommunicationException e) {
-            e.printStackTrace();
-        } catch (DeviceException e) {
-            e.printStackTrace();
-        }
-
-    }
-
     private boolean isInStreaming(SewBluetoothDevice s) {
         try {
             boolean is;
@@ -531,27 +517,11 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         return false;
     }
 
-    private int isConnected(SewBluetoothDevice s){
-            try {
-                int stat;
-                Log.v("sewdevice","Checking Status...");
-                stat=s.getStatus();
-                Log.v("sewdevice","Status=  "+stat);
-                return stat;
-
-
-            } catch (CommunicationException e) {
-                e.printStackTrace();
-            }
-        return -1;
-    }
-
     private long tryGetClock(SewBluetoothDevice s){
 
         try {
 
-            long t =s.getClock();
-            return t;
+            return s.getClock();
 
         } catch (CommunicationException e) {
             e.printStackTrace();
@@ -630,8 +600,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
     }
 
-
-    public void onSensorc(){
+    private void onSensorc(){
         if (streamtofeed) {
 
             switch (whatFragment) {
@@ -664,8 +633,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
 
     }
-
-
 
     @Override
     protected void onResume() {
@@ -728,28 +695,27 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         Toast.makeText(this,message,Toast.LENGTH_SHORT).show();
     }
 
-
-
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
     }
+
     @Override
     public void onNothingSelected(AdapterView<?> parent) {
 
     }
 
-//    private void removeDataSet() {
-//
-//        LineData data = chart.getData();
-//
-//        if (data != null) {
-//
-//            data.removeDataSet(data.getDataSetByIndex(data.getDataSetCount() - 1));
-//
-//            chart.notifyDataSetChanged();
-//            chart.invalidate();
-//        }
-//    }
+    private void removeDataSet() {
+
+        LineData data = chart.getData();
+
+        if (data != null) {
+
+            data.removeDataSet(data.getDataSetByIndex(data.getDataSetCount() - 1));
+
+            chart.notifyDataSetChanged();
+            chart.invalidate();
+        }
+    }
 
     @Override
     public void fftSize(int n) {
