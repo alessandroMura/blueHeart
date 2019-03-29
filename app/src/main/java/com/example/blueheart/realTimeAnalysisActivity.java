@@ -12,8 +12,10 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.example.blueheart.HeartyFilter.PeakDetectionFilter;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
@@ -22,7 +24,9 @@ import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import sew.CommunicationException;
 import sew.DeviceException;
@@ -40,38 +44,61 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     Spinner spinner;
     private LineChart chart;
 
+//Options
+    private int visibility_range=1024; //Numero campioni visualizzati nel grafico temporale all'inizializzazione
+    private static int size=512; //Numero campioni per la FFT all'inizializzazione
+    private Complex complexArray[]=new Complex[size]; //Array di complessi per la fft in ingresso
+    private Complex fftOut []=new Complex[size]; //Array di complessi per la fft in uscita
+    private float out []=new float[size/2]; // Array float in uscita per la fft reale o imag
+    private float in []=new float[size]; //Array di valori presi dal sensore per l'ingresso della fft
+    private float value=0; //variabile temporanea per il valore I-esimo preso dal sensore
+    private float poincareValue=0;
+    private float value0=0;
 
+// Boolean Variables
     private static boolean buffered=true;
+    private boolean canStream=true;
+    private boolean streamtofeed;
 
     private int whatFragment;
-    private float value=0;
     private int i=0;
-    private int visibility_range=1024;
 
+//Parametri, oggetti e variabili per il filtraggio
     private Filter filter=new Filter();
     private HeartyFilter.SavGolayFilter savgol =new HeartyFilter.SavGolayFilter(1);
     private HeartyFilter.StatFilter stats=new HeartyFilter.StatFilter();
     private float minr;
     private float maxr;
     private float ranger;
+    private float minrp=-100f;
+    private float maxrp=100f;
+    private float rangerp=200f;
+    private PeakDetectionFilter peak=new PeakDetectionFilter(10,10f);
+    private float peakv=0f;
+    private int peakindex=0;
+    private PanTompkins pan= new PanTompkins(250);
+    private double time;
+    /** LOW-PASS filter */
+    public static final float	lp_a[]			= { 1f, 2f, -1f };
+    public static final float	lp_b[]			= { 0.03125f, 0, 0, 0, 0, 0, -0.0625f, 0, 0, 0, 0, 0, 0.03125f };
+    public LmeFilter			lowpass			= new LmeFilter( lp_b, lp_a );
 
+    /** HIGH-PASS filter */
+    public static final float	hp_a[]			= { 1f, 1f };
+    public static final float	hp_b[]			= { -0.03125f, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1f, -1f, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.03125f };
+    public LmeFilter			highpass		= new LmeFilter( hp_b, hp_a );
 //    private HeartyFilter  lp=new HeartyFilter(bl,a);
 //    private HeartyFilter  hp=new HeartyFilter(bh,a);
 
+//    Inizializzazione oggetti thread
     private Thread thread0;
     private Thread thread1;
     private Thread thread2;
     private Thread thread3;
-
-    private static int size=512;
-    private Complex complexArray[]=new Complex[size];
-    private Complex fftOut []=new Complex[size];
-    private float out []=new float[size/2];
-    private float in []=new float[size];
+    private Thread poincareThread;
 
 
-    boolean canStream=true;
-    boolean streamtofeed;
 
 
     @Override
@@ -135,6 +162,8 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
     }
 
+
+//Activity Methods Implementation
     public void setupSensor(){
         List<SewBluetoothDevice> bluetoothDeviceList = DeviceFinder.findPairedDevices("sew");
         for (int i = 0; i < bluetoothDeviceList.size(); i++) {
@@ -171,10 +200,24 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         chart.setPinchZoom(false);
         chart.getAxisLeft().setDrawGridLines(false);
         chart.getAxisRight().setEnabled(false);
-        chart.getXAxis().setDrawGridLines(true);
-        chart.getXAxis().setDrawAxisLine(false);
+//        chart.getXAxis().setDrawGridLines(false);
+//        chart.getXAxis().setDrawAxisLine(false);
+        chart.getXAxis().setTextColor(Color.WHITE);
         LineData data = new LineData();
         chart.setData(data);
+
+        XAxis xl = chart.getXAxis();
+        xl.setTextColor(Color.WHITE);
+        xl.setDrawGridLines(false);
+        xl.setAvoidFirstLastClipping(true);
+        xl.setEnabled(true);
+
+        YAxis leftAxis = chart.getAxisLeft();
+        leftAxis.setTextColor(Color.BLACK);
+        leftAxis.setDrawGridLines(true);
+
+        YAxis rightAxis = chart.getAxisRight();
+        rightAxis.setEnabled(false);
 
     }
 
@@ -187,8 +230,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                 set = createSet();
                 data.addDataSet(set);
             }
-
-            data.addEntry(new Entry(set.getEntryCount(), value), 0);
+            data.addEntry(new Entry(set.getEntryCount(), value0), 0);
             data.notifyDataChanged();
 
             // let the chart know it's data has changed
@@ -196,15 +238,15 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
             YAxis leftAxis = chart.getAxisLeft();
 
-            leftAxis.setAxisMaximum(maxr/2);
-            leftAxis.setAxisMinimum(minr/2);
+            leftAxis.setAxisMaximum(200f);
+            leftAxis.setAxisMinimum(-200f);
 
 //            XAxis xAxis=chart.getXAxis();
             // limit the number of visible entries
             chart.setVisibleXRangeMaximum(visibility_range);
 
             // move to the latest entry
-            chart.moveViewToX(data.getEntryCount()-100);
+            chart.moveViewToX(data.getEntryCount());
 
             Legend l = chart.getLegend();
             l.setEnabled(false);
@@ -248,6 +290,40 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         l.setEnabled(false);
     }
 
+
+    private void setPoincareData(float datapoint){
+
+        LineData data = chart.getData();
+        if (data != null) {
+            ILineDataSet set = data.getDataSetByIndex(0);
+            if (set == null) {
+                set = createSet();
+                data.addDataSet(set);
+            }
+
+            data.addEntry(new Entry(set.getEntryCount(), datapoint), 0);
+            data.notifyDataChanged();
+
+            // let the chart know it's data has changed
+            chart.notifyDataSetChanged();
+
+            YAxis leftAxis = chart.getAxisLeft();
+
+            leftAxis.setAxisMaximum(maxrp);
+            leftAxis.setAxisMinimum(minrp);
+
+//            XAxis xAxis=chart.getXAxis();
+            // limit the number of visible entries
+            chart.setVisibleXRangeMaximum(visibility_range);
+
+            // move to the latest entry
+            chart.moveViewToX(data.getEntryCount());
+
+            Legend l = chart.getLegend();
+            l.setEnabled(false);
+        }
+    }
+
     private LineDataSet createSet() {
 
         LineDataSet set = new LineDataSet(null, "");
@@ -270,6 +346,8 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
             @Override
             public void run() {
 
+                value0=highpass.next(lowpass.next(value));
+
                 setData0();
 
 
@@ -280,8 +358,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
             @Override
             public void run() {
-
-
 
                     runOnUiThread(runnable0);
                     try {
@@ -430,6 +506,57 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         thread2.start();
     }
 
+    private void poincarePlotThread(){
+        if (poincareThread != null)
+            poincareThread.interrupt();
+        final Runnable poincareRunnable = new Runnable() {
+
+            @Override
+            public void run() {
+
+                poincareValue=pan.next(value,new Date().getTime());
+                stats.next(poincareValue);
+                minrp=stats.min;
+                maxrp=stats.max;
+                rangerp=stats.range;
+                Log.v("sewdevice", "Max:  " + maxrp+"");
+                Log.v("sewdevice", "Min:  " + minrp+"");
+                Log.v("sewdevice", "Range:  " + rangerp+"");
+                setPoincareData(poincareValue);
+
+
+            }
+        };
+
+        poincareThread = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                while (buffered) {
+//                    runOnUiThread(runnable);
+                    Log.v("PoincareThread","poincare thread run");
+//                    poincareRunnable.run();
+                    runOnUiThread(poincareRunnable);
+                    buffered=false;
+                    try {
+                        Thread.sleep(1);
+                    }
+                    catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            }
+
+        });
+
+        poincareThread.start();
+
+
+
+
+    }
+
     private void tryConnect(SewBluetoothDevice s){
         try {
             Log.v("sewdevice","Connecting....");
@@ -535,10 +662,11 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
             @Override
             public void run() {
-                Log.v("Runnable 3","Starting");
+                Log.v("Runnable Poincare","Starting");
                 if (isConnected(sewDevice)>-1) {
                     if (isInStreaming(sewDevice)) {
                         boolean stream=isInStreaming(sewDevice);
+//                        long start=System.nanoTime();
 
                         while (stream) {
                             RegularDataBlock[] rdbs = (RegularDataBlock[]) sewDevice.getDataBlocks();
@@ -546,32 +674,16 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                             for (int c = 0; c < rdbs.length; c++) {
 
                                 if (rdbs[c].getId() == 1) {
-
-
                                     float [] signal = rdbs[c].getValues();
 
-
                                     for (int z = 0; z < signal.length; z++) {
-
-                                        float bp=filter.HighPassFilter(filter.LowPassFilter(signal[z]));
-                                        value=savgol.next(bp);
-
-
-
-                                        stats.next(value);
-                                        minr=stats.min;
-                                        maxr=stats.max;
-                                        ranger=stats.range;
-                                        Log.v("sewdevice", "Max:  " + maxr+"");
-                                        Log.v("sewdevice", "Min:  " + minr+"");
-                                        Log.v("sewdevice", "Range:  " + ranger+"");
-
-
-
-                                        Log.v("sewdevice", "Value:  " + String.valueOf(value) + "----" + String.valueOf(z));
-
+                                        value=signal[z];
                                         streamtofeed = true;
                                         onSensorc();
+//                                        time=(System.nanoTime()-start)/1_000_000_000.0;
+                                        Log.v("sewdevice", "Value:  " + String.valueOf(value) + "--" + String.valueOf(z) );
+
+
                                     }
                                 }
                             }
@@ -625,6 +737,11 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                         i = 0;
                     }
                     break;
+                case 3:
+                    buffered=true;
+                    poincarePlotThread();
+                    break;
+
                 default:
                     feedMultiple0();
                     break;
@@ -634,6 +751,25 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
     }
 
+    public void showToast(String message){
+        Toast.makeText(this,message,Toast.LENGTH_SHORT).show();
+    }
+
+    private void removeDataSet() {
+
+        LineData data = chart.getData();
+
+        if (data != null) {
+
+            data.removeDataSet(data.getDataSetByIndex(data.getDataSetCount() - 1));
+
+            chart.notifyDataSetChanged();
+            chart.invalidate();
+        }
+    }
+
+
+//    Activity Lifecycle
     @Override
     protected void onResume() {
         Log.v("Actlif","onResume Called");
@@ -682,19 +818,12 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
             canStream=false;
             tryDisconnect(sewDevice);
             Log.v("sewdevice", String.valueOf(thread3.isInterrupted()));
-//            thread3.interrupt();
-//            Log.v("sewdevice","on pause disconnect");
-//            tryDisconnect(sewDevice);
-//            Log.v("sewdevice","on pause stopping stream");
-//            tryStopStream(sewDevice);
         }
 
     }
 
-    public void showToast(String message){
-        Toast.makeText(this,message,Toast.LENGTH_SHORT).show();
-    }
 
+//    Interfaces Overrides
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
     }
@@ -702,19 +831,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     @Override
     public void onNothingSelected(AdapterView<?> parent) {
 
-    }
-
-    private void removeDataSet() {
-
-        LineData data = chart.getData();
-
-        if (data != null) {
-
-            data.removeDataSet(data.getDataSetByIndex(data.getDataSetCount() - 1));
-
-            chart.notifyDataSetChanged();
-            chart.invalidate();
-        }
     }
 
     @Override

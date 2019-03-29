@@ -129,7 +129,7 @@ public class HeartyFilter {
         }
 
         // a0
-        if (a[0] != 1d) {
+        if (a[0] != 1f) {
             y[0] /= a[0];
         }
 
