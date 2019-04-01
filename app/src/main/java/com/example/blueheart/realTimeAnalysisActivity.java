@@ -291,17 +291,22 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     }
 
 
-    private void setPoincareData(float datapoint){
+    private void setPoincareData(float datapoint,float peakpoint){
 
         LineData data = chart.getData();
+
         if (data != null) {
             ILineDataSet set = data.getDataSetByIndex(0);
+            ILineDataSet set2 = data.getDataSetByIndex(1);
             if (set == null) {
                 set = createSet();
+                set2=createSet2();
                 data.addDataSet(set);
+                data.addDataSet(set2);
             }
 
             data.addEntry(new Entry(set.getEntryCount(), datapoint), 0);
+            data.addEntry(new Entry(set2.getEntryCount(), peakpoint), 1);
             data.notifyDataChanged();
 
             // let the chart know it's data has changed
@@ -334,6 +339,18 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         set.setMode(LineDataSet.Mode.LINEAR);
         set.setDrawFilled(false);
         return set;
+    }
+
+    private LineDataSet createSet2() {
+
+        LineDataSet set2 = new LineDataSet(null, "");
+        set2.setColor(Color.BLACK);
+        set2.setLineWidth(0.5f);
+        set2.setDrawValues(false);
+        set2.setDrawCircles(true);
+        set2.setMode(LineDataSet.Mode.STEPPED);
+        set2.setDrawFilled(false);
+        return set2;
     }
 
     private void feedMultiple0(){
@@ -515,6 +532,15 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
             public void run() {
 
                 poincareValue=pan.next(value,new Date().getTime());
+                peak.next(poincareValue);
+
+                Log.v("sewdevice", "Peak finder:  Value= " + peak.peakValue+"Index= "+peak.peakIdx);
+                if (peak.peakValue!=Float.NaN){
+                    peakv=peak.peakValue;
+                }else{
+                    peakv=0f;
+                }
+
                 stats.next(poincareValue);
                 minrp=stats.min;
                 maxrp=stats.max;
@@ -522,7 +548,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                 Log.v("sewdevice", "Max:  " + maxrp+"");
                 Log.v("sewdevice", "Min:  " + minrp+"");
                 Log.v("sewdevice", "Range:  " + rangerp+"");
-                setPoincareData(poincareValue);
+                setPoincareData(poincareValue,peakv);
 
 
             }
