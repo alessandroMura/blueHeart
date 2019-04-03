@@ -73,7 +73,7 @@ public class Filter {
 
     }
 
-    public float lowPassNext(float upVal){
+    public static float lowPassNext(float upVal){
         float mod = 0 ;
         for (int i = 0; i < lowPassCoeff.length; i++) {
             mod = mod + upVal* lowPassCoeff[i] ;
@@ -118,7 +118,7 @@ public class Filter {
         return highx[Highn + 16] - (highy0/32);
     }
 
-    public float highPassNext(float upVal){
+    public static float highPassNext(float upVal){
         float mod = 0 ;
 
         for (int i = 0; i < highPassCoeff.length; i++) {

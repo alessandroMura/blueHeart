@@ -734,7 +734,7 @@ public class PanTompkins extends LmeFilter
 		// wndOut-mean
 		y[ 7 ] = wndMean.next( y[ 6 ] );
 
-		// Log.d( "sd", " " + y[ 1 ] + "  " + y[ 3 ] + "  " + y[ 4 ] + "  " + y[ 6 ] + "  " + y[ 7 ] );
+		Log.d( "sd", " " + y[ 1 ] + "  " + y[ 3 ] + "  " + y[ 4 ] + "  " + y[ 6 ] + "  " + y[ 7 ] );
 
 
 		// all further processing is only done after an initial timeout, is only used to handle display issues with the
