@@ -415,22 +415,30 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     }
 
 
+
     private void setPoincareData(float datapoint,float peakpoint){
+
 
         LineData data = chart.getData();
 
         if (data != null) {
             ILineDataSet set = data.getDataSetByIndex(0);
-           ILineDataSet set2 = data.getDataSetByIndex(1);
+            ILineDataSet set2 = data.getDataSetByIndex(1);
             if (set == null) {
                 set = createSet();
                 set2=createSet2();
                 data.addDataSet(set);
                 data.addDataSet(set2);
             }
+            if (set2==null){
+                set2=createSet2();
+                data.addDataSet(set2);
 
+
+
+            }
             data.addEntry(new Entry(set.getEntryCount(), datapoint), 0);
-            data.addEntry(new Entry(set2.getEntryCount(), peakpoint), 1);
+            data.addEntry(new Entry(set.getEntryCount(), peakpoint), 1);
             data.notifyDataChanged();
 
             // let the chart know it's data has changed
@@ -450,6 +458,9 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
             Legend l = chart.getLegend();
             l.setEnabled(false);
+
+
+
         }
     }
 
@@ -507,14 +518,17 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
             public void run() {
 
 
-                    try {
-                        runOnUiThread(runnable0);
-                        Log.v("Runnables","FeedMultiple0 Done");
-                        Thread.sleep(0);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-
-                    }
+                while (buffered) {
+                    runOnUiThread(runnable0);
+                    buffered=false;
+                    Log.v("Runnables","FeedMultiple0 Done");
+//                    try {
+//                        Thread.sleep(0);
+//                    }
+//                    catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+                }
             }
 
         });
@@ -539,8 +553,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                 out =new float[size];
 
                 for (int s=0;s<size;s++){
-
-//                    Log.v("return","yes");
                     complexArray[s]=new Complex((double)in[s],0);
                 }
 
@@ -549,7 +561,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                 for (int z=0;z<size/2;z++) {
                     out[z] = (float) fftOut[z].abs();
                 }
-
 
                 setData(out);
 //                Log.v("Running","run");
@@ -561,23 +572,17 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
             @Override
             public void run() {
-                // Don't generate garbage runnables inside the loop.
+
                 while (buffered) {
                     runOnUiThread(runnable1);
-//                    runnable1.run();
                     buffered=false;
                     Log.v("Runnables","FeedMultiple1 Done");
-
-
-                    try {
-//                        runnable.run();
-                        Thread.sleep(1);
-
-
-
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+//                    try {
+//
+//                        Thread.sleep(1);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
                 }
             }
 
@@ -604,8 +609,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                 out =new float[size];
 
                 for (int s=0;s<size;s++){
-
-//                    Log.v("return","yes");
                     complexArray[s]=new Complex((double)in[s],0);
                 }
 
@@ -614,8 +617,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                 for (int z=0;z<size/2;z++) {
                     out[z] = (float) fftOut[z].phase();
                 }
-
-
                 setData(out);
 //                Log.v("Running","run");
 
@@ -626,22 +627,17 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
             @Override
             public void run() {
-                // Don't generate garbage runnables inside the loop.
+
                 while (buffered) {
                     runOnUiThread(runnable2);
-//                    runnable2.run();
                     buffered=false;
                     Log.v("Runnables","FeedMultiple2 Done");
 
-                    try {
-//                        runnable.run();
-                        Thread.sleep(1);
-
-
-
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+//                    try {
+//                        Thread.sleep(1);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
                 }
             }
 
@@ -693,17 +689,15 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
             @Override
             public void run() {
                 while (buffered) {
-//                    runOnUiThread(runnable);
-//                    poincareRunnable.run();
                     runOnUiThread(poincareRunnable);
                     buffered=false;
                     Log.v("Runnables","Poincare Done");
-                    try {
-                        Thread.sleep(1);
-                    }
-                    catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+//                    try {
+//                        Thread.sleep(1);
+//                    }
+//                    catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
                 }
 
             }
@@ -876,9 +870,9 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
     private void onSensorc(){
         if (streamtofeed) {
-
             switch (whatFragment) {
                 case 0:
+                    buffered=true;
                     feedMultiple0();
                     break;
                 case 1:
@@ -905,6 +899,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                     break;
 
                 default:
+                    buffered=true;
                     feedMultiple0();
                     break;
             }
@@ -922,9 +917,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         LineData data = chart.getData();
 
         if (data != null) {
-
             data.removeDataSet(data.getDataSetByIndex(data.getDataSetCount() - 1));
-
             chart.notifyDataSetChanged();
             chart.invalidate();
         }
@@ -976,7 +969,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     protected void onDestroy() {
         Log.v("Actlif","onDestroy Called");
         super.onDestroy();
-        removeDataSet();
+//        removeDataSet();
 
         if (thread0!=null){
             thread3.interrupt();
@@ -1051,9 +1044,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                 try {
                     runOnUiThread(setupRunnable);
                     Log.v("Runnables","setupRunnable Done");
-
-
-
                     Thread.sleep(0);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
