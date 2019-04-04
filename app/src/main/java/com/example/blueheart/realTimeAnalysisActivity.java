@@ -37,183 +37,118 @@ import sew.SewBluetoothDevice;
 import static com.example.blueheart.deviceListActivity.sewDevice;
 
 
-public class realTimeAnalysisActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener,parameterSend {
+public class realTimeAnalysisActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener, parameterSend {
 
-//Graphic elements Initialization
-    Fragment timeDomainFrag,freqMagFrag,freqPhasFrag,poincarFrag,lagPoincarFrag;
+    //Graphic elements Initialization
+    Fragment timeDomainFrag, freqMagFrag, freqPhasFrag, poincarFrag, lagPoincarFrag;
     Spinner spinner;
     private LineChart chart;
 
-//Options
-    private int visibility_range=1024; //Numero campioni visualizzati nel grafico temporale all'inizializzazione
-    private static int size=512; //Numero campioni per la FFT all'inizializzazione
-    private Complex complexArray[]=new Complex[size]; //Array di complessi per la fft in ingresso
-    private Complex fftOut []=new Complex[size]; //Array di complessi per la fft in uscita
-    private float out []=new float[size/2]; // Array float in uscita per la fft reale o imag
-    private float in []=new float[size]; //Array di valori presi dal sensore per l'ingresso della fft
-    private float value=0; //variabile temporanea per il valore I-esimo preso dal sensore
-    private float poincareValue=0;
-    private float value0=0;
+    //Options
+    private int visibility_range = 1024; //Numero campioni visualizzati nel grafico temporale all'inizializzazione
+    private static int size = 512; //Numero campioni per la FFT all'inizializzazione
+    private Complex complexArray[] = new Complex[size]; //Array di complessi per la fft in ingresso
+    private Complex fftOut[] = new Complex[size]; //Array di complessi per la fft in uscita
+    private float out[] = new float[size / 2]; // Array float in uscita per la fft reale o imag
+    private float in[] = new float[size]; //Array di valori presi dal sensore per l'ingresso della fft
+    private float value = 0; //variabile temporanea per il valore I-esimo preso dal sensore
+    private float poincareValue = 0;
+    private float value0 = 0;
 
-// Boolean Variables
-    private static boolean buffered=true;
-    private boolean canStream=true;
+    // Boolean Variables
+    private static boolean buffered = true;
+    private boolean canStream = true;
     private boolean streamtofeed;
 
     private int whatFragment;
-    private int i=0;
+    private int i = 0;
+
+
+
+    //Parametri, oggetti e variabili per il filtraggio
+
+    private float minrp = -100f;
+    private float maxrp = 100f;
+    private float rangerp = 200f;
+    private float peakp = 0f;
 
     private long start;
-
-//Parametri, oggetti e variabili per il filtraggio
-    private Filter filter=new Filter();
-    private HeartyFilter.SavGolayFilter savgol =new HeartyFilter.SavGolayFilter(1);
-    private HeartyFilter.StatFilter stats=new HeartyFilter.StatFilter();
-    private float minr;
-    private float maxr;
-    private float ranger;
-    private float minrp=-100f;
-    private float maxrp=100f;
-    private float rangerp=200f;
-    private PeakDetectionFilter peak=new PeakDetectionFilter(19,4);
-    private float peakv=0f;
-    private int peakindex=0;
-    private float peakp=0f;
-    private PanTompkins pan= new PanTompkins(250);
     private double time;
-    /** LOW-PASS filter */
-    public static final float	lp_a[]			= { 1f, 2f, -1f };
-    public static final float	lp_b[]			= { 0.03125f, 0, 0, 0, 0, 0, -0.0625f, 0, 0, 0, 0, 0, 0.03125f };
-    public LmeFilter			lowpass			= new LmeFilter( lp_b, lp_a );
 
-    /** HIGH-PASS filter */
-    public static final float	hp_a[]			= { 1f, 1f };
-    public static final float	hp_b[]			= { -0.03125f, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1f, -1f, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.03125f };
-    public LmeFilter			highpass		= new LmeFilter( hp_b, hp_a );
 
-    public static final float	diff_a[]		= { 8f };
-    public static final float	diff_b[]		= { 2f, 1f, 0f, -1f, -2f };
-    public LmeFilter			diff			= new LmeFilter( diff_b, diff_a );
+    private HeartyFilter.SavGolayFilter savgol = new HeartyFilter.SavGolayFilter(1);
+    private HeartyFilter.StatFilter stats = new HeartyFilter.StatFilter();
 
-    private float hp2_b[]={
-
-            -0.011829420542201355207034829675194487209f,
-                    -0.013800578668977568630449326292364276014f,
-                    -0.015982922958368072502421952663098636549f,
-                    -0.01842671715807690097088666902891418431f,
-                    -0.0211997401587666160771572521070993389f,
-                    -0.024395626679248692131318776432635786477f,
-                    -0.028147475741042881497433469917268666904f,
-                    -0.032651065111736737867076385555265005678f,
-                    -0.038206637287977171513198015873058466241f,
-                    -0.045299257137646015136667188016872387379f,
-                    -0.054766832403761858683033381112181814387f,
-                    -0.068192161521626326603495726885739713907f,
-                    -0.088967063375629304444736078494315734133f,
-                    -0.125910418426685544179832731970236636698f,
-                    -0.211358374273133114984446478956670034677f,
-                    -0.636337017713277441899322184326592832804f,
-            0.636337017713277441899322184326592832804f,
-            0.211358374273133114984446478956670034677f,
-            0.125910418426685544179832731970236636698f,
-            0.088967063375629304444736078494315734133f,
-            0.068192161521626326603495726885739713907f,
-            0.054766832403761858683033381112181814387f,
-            0.045299257137646015136667188016872387379f,
-            0.038206637287977171513198015873058466241f,
-            0.032651065111736737867076385555265005678f,
-            0.028147475741042881497433469917268666904f,
-            0.024395626679248692131318776432635786477f,
-            0.0211997401587666160771572521070993389f,
-            0.01842671715807690097088666902891418431f,
-            0.015982922958368072502421952663098636549f,
-            0.013800578668977568630449326292364276014f,
-            0.011829420542201355207034829675194487209f
-
+    private float hp2_b[] = {
+            -0.011829420542201355207034829675194487209f, -0.013800578668977568630449326292364276014f,
+            -0.015982922958368072502421952663098636549f, -0.01842671715807690097088666902891418431f,
+            -0.0211997401587666160771572521070993389f, -0.024395626679248692131318776432635786477f,
+            -0.028147475741042881497433469917268666904f, -0.032651065111736737867076385555265005678f,
+            -0.038206637287977171513198015873058466241f, -0.045299257137646015136667188016872387379f,
+            -0.054766832403761858683033381112181814387f, -0.068192161521626326603495726885739713907f,
+            -0.088967063375629304444736078494315734133f, -0.125910418426685544179832731970236636698f,
+            -0.211358374273133114984446478956670034677f, -0.636337017713277441899322184326592832804f,
+            0.636337017713277441899322184326592832804f, 0.211358374273133114984446478956670034677f,
+            0.125910418426685544179832731970236636698f, 0.088967063375629304444736078494315734133f,
+            0.068192161521626326603495726885739713907f, 0.054766832403761858683033381112181814387f,
+            0.045299257137646015136667188016872387379f, 0.038206637287977171513198015873058466241f,
+            0.032651065111736737867076385555265005678f, 0.028147475741042881497433469917268666904f,
+            0.024395626679248692131318776432635786477f, 0.0211997401587666160771572521070993389f,
+            0.01842671715807690097088666902891418431f, 0.015982922958368072502421952663098636549f,
+            0.013800578668977568630449326292364276014f, 0.011829420542201355207034829675194487209f
     };
-    private float hp2_a[]={1f};
-    private float lp2_b[]={
-            0.011693616047358012036139207623364200117f,
-                    -0.000000000000000031185374660155001489261f,
-                    -0.013364132625551961713883386551060539205f,
-            0.0232869762658663576049278276514087338f,
-                    -0.025227557621355242711835842328582657501f,
-            0.017008896068884372942964233743623481132f,
-                    -0.000000000000000031185374660155007652237f,
-                    -0.020788650750858620602778970010149350855f,
-            0.037841336432032843251072051771188853309f,
-                    -0.043247241636608979575839839526452124119f,
-            0.031182976126287995088937066157086519524f,
-                    -0.000000000000000031185374660155007652237f,
-                    -0.046774464189431930183360464070574380457f,
-            0.100910230485420929213979945870960364118f,
-                    -0.151365345728131400759863822713668923825f,
-            0.187097856757727859511319934426865074784f,
-            0.800000000000000044408920985006261616945f,
-            0.187097856757727859511319934426865074784f,
-                    -0.151365345728131400759863822713668923825f,
-            0.100910230485420929213979945870960364118f,
-                    -0.046774464189431930183360464070574380457f,
-                    -0.000000000000000031185374660155007652237f,
-            0.031182976126287995088937066157086519524f,
-                    -0.043247241636608979575839839526452124119f,
-            0.037841336432032843251072051771188853309f,
-                    -0.020788650750858620602778970010149350855f,
-                    -0.000000000000000031185374660155007652237f,
-            0.017008896068884372942964233743623481132f,
-                    -0.025227557621355242711835842328582657501f,
-            0.0232869762658663576049278276514087338f,
-                    -0.013364132625551961713883386551060539205f,
-                    -0.000000000000000031185374660155001489261f,
+    private float hp2_a[] = {1f};
+    private float lp2_b[] = {
+            0.011693616047358012036139207623364200117f, -0.000000000000000031185374660155001489261f,
+            -0.013364132625551961713883386551060539205f, 0.0232869762658663576049278276514087338f,
+            -0.025227557621355242711835842328582657501f, 0.017008896068884372942964233743623481132f,
+            -0.000000000000000031185374660155007652237f, -0.020788650750858620602778970010149350855f,
+            0.037841336432032843251072051771188853309f, -0.043247241636608979575839839526452124119f,
+            0.031182976126287995088937066157086519524f, -0.000000000000000031185374660155007652237f,
+            -0.046774464189431930183360464070574380457f, 0.100910230485420929213979945870960364118f,
+            -0.151365345728131400759863822713668923825f, 0.187097856757727859511319934426865074784f,
+            0.800000000000000044408920985006261616945f, 0.187097856757727859511319934426865074784f,
+            -0.151365345728131400759863822713668923825f, 0.100910230485420929213979945870960364118f,
+            -0.046774464189431930183360464070574380457f, -0.000000000000000031185374660155007652237f,
+            0.031182976126287995088937066157086519524f, -0.043247241636608979575839839526452124119f,
+            0.037841336432032843251072051771188853309f, -0.020788650750858620602778970010149350855f,
+            -0.000000000000000031185374660155007652237f, 0.017008896068884372942964233743623481132f,
+            -0.025227557621355242711835842328582657501f, 0.0232869762658663576049278276514087338f,
+            -0.013364132625551961713883386551060539205f, -0.000000000000000031185374660155001489261f,
             0.011693616047358012036139207623364200117f
     };
-    private float lp2_a[]={1f};
+    private float lp2_a[] = {1f};
 
+    private LmeFilter lp = new LmeFilter(lp2_b, lp2_a);
+    private LmeFilter hp = new LmeFilter(hp2_b, hp2_a);
 
-    private LmeFilter  lp=new LmeFilter(lp2_b,lp2_a);
-    private LmeFilter  hp=new LmeFilter(hp2_b,hp2_a);
-
-    private float notch_a[]={1f};
-    private float notch_b[]={
-                -0.009291172581737500504872606654771516332f,
-                        -0.032051810844675183986840494299030979164f,
-                        -0.010441303862913935487921612832451501163f,
-                0.025624254915773990448624175542136072181f,
-                0.026217018998279079111668465884577017277f,
-                        -0.009484228188649752866457021127644111402f,
-                        -0.032056357342216713901539293374298722483f,
-                        -0.010251040666833461170726060629476705799f,
-                0.02574573744270795133681772881573124323f,
-                0.026101417527400395945935684949290589429f,
-                        -0.009676760355272177524521559632830758346f,
-                        -0.032059085462631434215730052983417408541f,
-                        -0.010060184082715209474834239244955824688f,
-                0.025865766021603790042471260335332772229f,
-                0.025984329655874480180521857164421817288f,
-                        -0.00986875149407467379403247065283721895f,
-                0.967940005126915914424046150088543072343f,
-                        -0.00986875149407467379403247065283721895f,
-                0.025984329655874480180521857164421817288f,
-                0.025865766021603790042471260335332772229f,
-                        -0.010060184082715209474834239244955824688f,
-                        -0.032059085462631434215730052983417408541f,
-                        -0.009676760355272177524521559632830758346f,
-                0.026101417527400395945935684949290589429f,
-                0.02574573744270795133681772881573124323f,
-                        -0.010251040666833461170726060629476705799f,
-                        -0.032056357342216713901539293374298722483f,
-                        -0.009484228188649752866457021127644111402f,
-                0.026217018998279079111668465884577017277f,
-                0.025624254915773990448624175542136072181f,
-                        -0.010441303862913935487921612832451501163f,
-                        -0.032051810844675183986840494299030979164f,
-                        -0.009291172581737500504872606654771516332f
+    private float notch_a[] = {1f};
+    private float notch_b[] = {
+            -0.009291172581737500504872606654771516332f, -0.032051810844675183986840494299030979164f,
+            -0.010441303862913935487921612832451501163f, 0.025624254915773990448624175542136072181f,
+            0.026217018998279079111668465884577017277f, -0.009484228188649752866457021127644111402f,
+            -0.032056357342216713901539293374298722483f, -0.010251040666833461170726060629476705799f,
+            0.02574573744270795133681772881573124323f, 0.026101417527400395945935684949290589429f,
+            -0.009676760355272177524521559632830758346f, -0.032059085462631434215730052983417408541f,
+            -0.010060184082715209474834239244955824688f, 0.025865766021603790042471260335332772229f,
+            0.025984329655874480180521857164421817288f, -0.00986875149407467379403247065283721895f,
+            0.967940005126915914424046150088543072343f, -0.00986875149407467379403247065283721895f,
+            0.025984329655874480180521857164421817288f, 0.025865766021603790042471260335332772229f,
+            -0.010060184082715209474834239244955824688f, -0.032059085462631434215730052983417408541f,
+            -0.009676760355272177524521559632830758346f, 0.026101417527400395945935684949290589429f,
+            0.02574573744270795133681772881573124323f, -0.010251040666833461170726060629476705799f,
+            -0.032056357342216713901539293374298722483f, -0.009484228188649752866457021127644111402f,
+            0.026217018998279079111668465884577017277f, 0.025624254915773990448624175542136072181f,
+            -0.010441303862913935487921612832451501163f, -0.032051810844675183986840494299030979164f,
+            -0.009291172581737500504872606654771516332f
     };
+    private LmeFilter notch = new LmeFilter(notch_b, notch_a);
 
-    private LmeFilter  notch=new LmeFilter(notch_b,notch_a);
+    private LmeFilter.WndIntFilter meanw = new LmeFilter.WndIntFilter(5);
 
-//    Inizializzazione oggetti thread
+    private PanTompkins pan = new PanTompkins(250);
+
+    //    Inizializzazione oggetti thread
     private Thread setupThread;
     private Thread thread0;
     private Thread thread1;
@@ -222,25 +157,23 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     private Thread poincareThread;
 
 
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.v("Actlif","onCreate Called");
+        Log.v("Actlif", "onCreate Called");
 
         setContentView(R.layout.activity_real_time_analysis);
-        spinner =  findViewById(R.id.spinner_mode);
+        spinner = findViewById(R.id.spinner_mode);
 
-        timeDomainFrag= new timeDomainFragment();
-        freqMagFrag= new frequencyMagnitudeFragment();
-        freqPhasFrag=new frequencyPhaseFragment();
-        poincarFrag= new poincarePlotFragment();
-        lagPoincarFrag=new laggedPoincareFragment();
+        timeDomainFrag = new timeDomainFragment();
+        freqMagFrag = new frequencyMagnitudeFragment();
+        freqPhasFrag = new frequencyPhaseFragment();
+        poincarFrag = new poincarePlotFragment();
+        lagPoincarFrag = new laggedPoincareFragment();
 
         // Create an ArrayAdapter using the string array and a default spinner layout
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item,getResources().getStringArray(R.array.modes_array));
+                android.R.layout.simple_spinner_item, getResources().getStringArray(R.array.modes_array));
         // Specify the layout to use when the list of choices appears
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         // Apply the adapter to the spinner
@@ -250,66 +183,67 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         setup();
 
 
-        spinner.setOnItemSelectedListener( new AdapterView.OnItemSelectedListener(){
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view,
                                        int pos, long id) {
                 showToast((String) parent.getItemAtPosition(pos));
-                switch (pos){
+                switch (pos) {
                     case 0:
-                        whatFragment=0;
+                        whatFragment = 0;
                         setFragment(timeDomainFrag);
                         break;
                     case 1:
-                        whatFragment=1;
+                        whatFragment = 1;
                         setFragment(freqMagFrag);
                         break;
                     case 2:
-                        whatFragment=2;
+                        whatFragment = 2;
                         setFragment(freqPhasFrag);
                         break;
                     case 3:
-                        whatFragment=3;
+                        whatFragment = 3;
 
                         setFragment(poincarFrag);
                         break;
                     case 4:
-                        whatFragment=4;
+                        whatFragment = 4;
                         setFragment(lagPoincarFrag);
                         break;
                 }
             }
 
             @Override
-            public void onNothingSelected(AdapterView<?> parent) { }
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
         });
 
     }
 
 
-//Activity Methods Implementation
-    public void setupSensor(){
+    //Activity Methods Implementation
+    public void setupSensor() {
         List<SewBluetoothDevice> bluetoothDeviceList = DeviceFinder.findPairedDevices("sew");
         for (int i = 0; i < bluetoothDeviceList.size(); i++) {
             if (bluetoothDeviceList.get(i).getName().equals(deviceListActivity.currentID)) {
                 sewDevice = bluetoothDeviceList.get(i);
-                Log.v("sewdevice","created");
+                Log.v("sewdevice", "created");
                 Log.v("sewdevice", sewDevice.getAddress());
-            }else{
+            } else {
                 showToast("Selected!= found");
             }
         }
 
     }
 
-    public void setFragment(Fragment fragment){
-        FragmentTransaction fragtransaction=getSupportFragmentManager().beginTransaction();
-        fragtransaction.replace(R.id.fragment_frame,fragment);
+    public void setFragment(Fragment fragment) {
+        FragmentTransaction fragtransaction = getSupportFragmentManager().beginTransaction();
+        fragtransaction.replace(R.id.fragment_frame, fragment);
         fragtransaction.commit();
 
     }
 
-    private void setupChart(){
+    private void setupChart() {
 
         chart = findViewById(R.id.chart);
         chart.setDrawGridBackground(false);
@@ -321,7 +255,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         chart.setDragEnabled(true);
         chart.setScaleEnabled(true);
         // if disabled, scaling can be done on x- and y-axis separately
-        chart.setPinchZoom(false);
+        chart.setPinchZoom(true);
         chart.getAxisLeft().setDrawGridLines(false);
         chart.getAxisRight().setEnabled(false);
 //        chart.getXAxis().setDrawGridLines(false);
@@ -362,8 +296,8 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
             YAxis leftAxis = chart.getAxisLeft();
 
-            leftAxis.setAxisMaximum(200f);
-            leftAxis.setAxisMinimum(-200f);
+            leftAxis.setAxisMaximum(300f);
+            leftAxis.setAxisMinimum(-300f);
 
 //            XAxis xAxis=chart.getXAxis();
             // limit the number of visible entries
@@ -382,7 +316,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     private void setData(float[] in) {
 
         ArrayList<Entry> values = new ArrayList<>();
-        for (int j=0;j<size/2;j++) {
+        for (int j = 0; j < size / 2; j++) {
             values.add(new Entry(j, in[j]));
         }
 
@@ -408,15 +342,13 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         chart.fitScreen();
 
         // let the chart know it's data has changed
-       chart.invalidate();
+        chart.invalidate();
         // get the legend (only possible after setting data)
         Legend l = chart.getLegend();
         l.setEnabled(false);
     }
 
-
-
-    private void setPoincareData(float datapoint,float peakpoint){
+    private void setPoincareData(float datapoint, float peakpoint) {
 
 
         LineData data = chart.getData();
@@ -426,14 +358,13 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
             ILineDataSet set2 = data.getDataSetByIndex(1);
             if (set == null) {
                 set = createSet();
-                set2=createSet2();
+                set2 = createSet2();
                 data.addDataSet(set);
                 data.addDataSet(set2);
             }
-            if (set2==null){
-                set2=createSet2();
+            if (set2 == null) {
+                set2 = createSet2();
                 data.addDataSet(set2);
-
 
 
             }
@@ -458,7 +389,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
             Legend l = chart.getLegend();
             l.setEnabled(false);
-
 
 
         }
@@ -488,7 +418,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         return set2;
     }
 
-    private void feedMultiple0(){
+    private void feedMultiple0() {
 
         if (thread0 != null)
             thread0.interrupt();
@@ -497,11 +427,14 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
             @Override
             public void run() {
-                Log.v("Runnables","FeedMultiple0 Started");
+                Log.v("Runnables", "FeedMultiple0 Started");
 
 
-                value0=highpass.next(lowpass.next(value));
+//                value0=highpass.next(lowpass.next(value));
+                value0=value;
 
+
+                Log.v("xx", String.valueOf(value0));
 //                value0=hp.next(lp.next(savgol.next(value)));
 //                value0=savgol.next(value);
 //                float tempVar;
@@ -519,9 +452,9 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
 
                 while (buffered) {
-                    runOnUiThread(runnable0);
-                    buffered=false;
-                    Log.v("Runnables","FeedMultiple0 Done");
+                   runOnUiThread(runnable0);
+                   buffered = false;
+                    Log.v("Runnables", "FeedMultiple0 Done");
 //                    try {
 //                        Thread.sleep(0);
 //                    }
@@ -536,7 +469,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         thread0.start();
 
 
-
     }
 
     private void feedMultiple1() {
@@ -548,17 +480,17 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
             @Override
             public void run() {
-                Log.v("Runnables","FeedMultiple1 Started");
+                Log.v("Runnables", "FeedMultiple1 Started");
 
-                out =new float[size];
+                out = new float[size];
 
-                for (int s=0;s<size;s++){
-                    complexArray[s]=new Complex((double)in[s],0);
+                for (int s = 0; s < size; s++) {
+                    complexArray[s] = new Complex((double) in[s], 0);
                 }
 
-                fftOut=FFT.fft(complexArray);
+                fftOut = FFT.fft(complexArray);
 
-                for (int z=0;z<size/2;z++) {
+                for (int z = 0; z < size / 2; z++) {
                     out[z] = (float) fftOut[z].abs();
                 }
 
@@ -575,8 +507,8 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
                 while (buffered) {
                     runOnUiThread(runnable1);
-                    buffered=false;
-                    Log.v("Runnables","FeedMultiple1 Done");
+                    buffered = false;
+                    Log.v("Runnables", "FeedMultiple1 Done");
 //                    try {
 //
 //                        Thread.sleep(1);
@@ -602,19 +534,18 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
             @Override
             public void run() {
-                Log.v("Runnables","FeedMultiple2 Starting");
+                Log.v("Runnables", "FeedMultiple2 Starting");
 
 
+                out = new float[size];
 
-                out =new float[size];
-
-                for (int s=0;s<size;s++){
-                    complexArray[s]=new Complex((double)in[s],0);
+                for (int s = 0; s < size; s++) {
+                    complexArray[s] = new Complex((double) in[s], 0);
                 }
 
-                fftOut=FFT.fft(complexArray);
+                fftOut = FFT.fft(complexArray);
 
-                for (int z=0;z<size/2;z++) {
+                for (int z = 0; z < size / 2; z++) {
                     out[z] = (float) fftOut[z].phase();
                 }
                 setData(out);
@@ -630,8 +561,8 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
                 while (buffered) {
                     runOnUiThread(runnable2);
-                    buffered=false;
-                    Log.v("Runnables","FeedMultiple2 Done");
+                    buffered = false;
+                    Log.v("Runnables", "FeedMultiple2 Done");
 
 //                    try {
 //                        Thread.sleep(1);
@@ -646,39 +577,35 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         thread2.start();
     }
 
-    private void poincarePlotThread(){
+    private void poincarePlotThread() {
         if (poincareThread != null)
             poincareThread.interrupt();
         final Runnable poincareRunnable = new Runnable() {
 
             @Override
             public void run() {
-                Log.v("Runnables","Poincare Starting");
-//                poincareValue=pan.next(value, 250);
+                Log.v("Runnables", "Poincare Starting");
 
-                poincareValue=highpass.next(lowpass.next(value));
-//                Log.v("sewdevice", "Peak finder:  Value= " + pan.rrStats.value+"Index= "+pan.rPeak.peakIdx);
-//                if (peak.peakValue!=Float.NaN){
-//                    peakv=peak.peakValue;
-//                }else{
-//                    peakv=0f;
-//                }
+                //                poincareValue=highpass.next(lowpass.next(value));
+
+                poincareValue = pan.next(value, (long) time);
+                Log.v("pantom", "Time:  " + String.valueOf(time) + "  Value:  " + String.valueOf(poincareValue));
 
                 stats.next(poincareValue);
-                minrp=stats.min;
-                maxrp=stats.max;
-                rangerp=stats.range;
-                if (poincareValue>60f){
-                    Log.v("sewdevice", "Peak finder:  Value= " +poincareValue);
-                    peakp=maxrp;
+                minrp = stats.min;
+                maxrp = stats.max;
+                rangerp = stats.range;
+                if (poincareValue > 70f) {
+                    Log.v("sewdevice", "Peak finder:  Value= " + poincareValue);
+                    peakp = maxrp;
 
-                }else{
-                    peakp=0f;
+                } else {
+                    peakp = 0f;
                 }
-                Log.v("sewdevice", "Max:  " + maxrp+"");
-                Log.v("sewdevice", "Min:  " + minrp+"");
-                Log.v("sewdevice", "Range:  " + rangerp+"");
-                setPoincareData(poincareValue,peakp);
+                Log.v("sewdevice", "Max:  " + maxrp + "");
+                Log.v("sewdevice", "Min:  " + minrp + "");
+                Log.v("sewdevice", "Range:  " + rangerp + "");
+                setPoincareData(poincareValue, peakp);
 
 
             }
@@ -690,8 +617,8 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
             public void run() {
                 while (buffered) {
                     runOnUiThread(poincareRunnable);
-                    buffered=false;
-                    Log.v("Runnables","Poincare Done");
+                    buffered = false;
+                    Log.v("Runnables", "Poincare Done");
 //                    try {
 //                        Thread.sleep(1);
 //                    }
@@ -707,15 +634,13 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         poincareThread.start();
 
 
-
-
     }
 
-    private void tryConnect(SewBluetoothDevice s){
+    private void tryConnect(SewBluetoothDevice s) {
         try {
-            Log.v("sewdevice","Connecting....");
+            Log.v("sewdevice", "Connecting....");
             s.connect();
-            Log.v("sewdevice","Connected");
+            Log.v("sewdevice", "Connected");
         } catch (CommunicationException e) {
             e.printStackTrace();
         } catch (DeviceException e) {
@@ -724,11 +649,11 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
     }
 
-    private void tryDisconnect(SewBluetoothDevice s){
+    private void tryDisconnect(SewBluetoothDevice s) {
         try {
-            Log.v("sewdevice","Disconnecting...");
+            Log.v("sewdevice", "Disconnecting...");
             s.disconnect();
-            Log.v("sewdevice","Disconnected");
+            Log.v("sewdevice", "Disconnected");
         } catch (CommunicationException e) {
             e.printStackTrace();
         } catch (DeviceException e) {
@@ -737,12 +662,12 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
     }
 
-    private int isConnected(SewBluetoothDevice s){
+    private int isConnected(SewBluetoothDevice s) {
         try {
             int stat;
-            Log.v("sewdevice","Checking Status...");
-            stat=s.getStatus();
-            Log.v("sewdevice","Status=  "+stat);
+            Log.v("sewdevice", "Checking Status...");
+            stat = s.getStatus();
+            Log.v("sewdevice", "Status=  " + stat);
             return stat;
 
 
@@ -752,11 +677,11 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         return -1;
     }
 
-    private void tryStream(SewBluetoothDevice s){
+    private void tryStream(SewBluetoothDevice s) {
         try {
-            Log.v("sewdevice","Starting Stream....");
+            Log.v("sewdevice", "Starting Stream....");
             s.startStreaming();
-            Log.v("sewdevice","Streaming Started!");
+            Log.v("sewdevice", "Streaming Started!");
         } catch (CommunicationException e) {
             e.printStackTrace();
         } catch (DeviceException e) {
@@ -765,11 +690,11 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
     }
 
-    private void tryStopStream(SewBluetoothDevice s){
+    private void tryStopStream(SewBluetoothDevice s) {
         try {
-            Log.v("sewdevice","Stopping Stream....");
+            Log.v("sewdevice", "Stopping Stream....");
             s.stopStreaming();
-            Log.v("sewdevice","Streaming Stopped!");
+            Log.v("sewdevice", "Streaming Stopped!");
         } catch (CommunicationException e) {
             e.printStackTrace();
         } catch (DeviceException e) {
@@ -798,7 +723,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         return false;
     }
 
-    private long tryGetClock(SewBluetoothDevice s){
+    private long tryGetClock(SewBluetoothDevice s) {
 
         try {
 
@@ -816,12 +741,12 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
             @Override
             public void run() {
-                Log.v("Runnables","Streaming Starting");
-                if (isConnected(sewDevice)==0 ||isConnected(sewDevice)==1) {
+                Log.v("Runnables", "Streaming Starting");
+                if (isConnected(sewDevice) == 0 || isConnected(sewDevice) == 1) {
                     if (isInStreaming(sewDevice)) {
-                        boolean stream=isInStreaming(sewDevice);
-                        start=System.nanoTime();
-                        RegularDataBlock [] rdbs;
+                        boolean stream = isInStreaming(sewDevice);
+                        start = System.nanoTime();
+                        RegularDataBlock[] rdbs;
 
                         while (stream && canStream) {
                             rdbs = (RegularDataBlock[]) sewDevice.getDataBlocks();
@@ -829,14 +754,16 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                             for (int c = 0; c < rdbs.length; c++) {
 
                                 if (rdbs[c].getId() == 1) {
-                                    float [] signal = rdbs[c].getValues();
+                                    float[] signal = rdbs[c].getValues();
 
                                     for (int z = 0; z < signal.length; z++) {
-                                        value=signal[z];
+
+                                        time = (System.nanoTime() - start) / 1_000_000_000.0;
+                                        value = signal[z];
                                         streamtofeed = true;
                                         onSensorc();
-//                                        time=(System.nanoTime()-start)/1_000_000_000.0;
-                                        Log.v("sewdevice", "Value:  " + String.valueOf(value) + "--" + String.valueOf(z) );
+//                                        Log.v("sewdevice", "Value:  " + String.valueOf(value) + "--" + String.valueOf(z));
+                                        Log.v("sewdevice",  String.valueOf(value));
 
 
                                     }
@@ -844,10 +771,10 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                             }
                             streamtofeed = false;
                         }
-                    }else{
+                    } else {
                         tryStream(sewDevice);
                     }
-                }else {
+                } else {
                     tryConnect(sewDevice);
                 }
             }
@@ -868,12 +795,16 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
     }
 
-    private void onSensorc(){
+    private void onSensorc() {
         if (streamtofeed) {
             switch (whatFragment) {
                 case 0:
-                    buffered=true;
-                    feedMultiple0();
+                    buffered = true;
+//                    value0=pan.highpass.next(pan.lowpass.next(value));
+                   value0=pan.next(value,(long) time);
+
+
+                    setData0();
                     break;
                 case 1:
                     in[i] = value;
@@ -894,12 +825,30 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                     }
                     break;
                 case 3:
-                    buffered=true;
-                    poincarePlotThread();
+                    buffered = true;
+//                    poincarePlotThread();
+                    poincareValue = pan.next(value, (long) time);
+                    Log.v("pantom", "Time:  " + String.valueOf(time) + "  Value:  " + String.valueOf(poincareValue));
+
+                    stats.next(poincareValue);
+                    minrp = stats.min;
+                    maxrp = stats.max;
+                    rangerp = stats.range;
+                    if (poincareValue > 70f) {
+                        Log.v("sewdevice", "Peak finder:  Value= " + poincareValue);
+                        peakp = maxrp;
+
+                    } else {
+                        peakp = 0f;
+                    }
+                    Log.v("sewdevice", "Max:  " + maxrp + "");
+                    Log.v("sewdevice", "Min:  " + minrp + "");
+                    Log.v("sewdevice", "Range:  " + rangerp + "");
+                    setPoincareData(poincareValue, peakp);
                     break;
 
                 default:
-                    buffered=true;
+                    buffered = true;
                     feedMultiple0();
                     break;
             }
@@ -908,8 +857,8 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
     }
 
-    public void showToast(String message){
-        Toast.makeText(this,message,Toast.LENGTH_SHORT).show();
+    public void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
     private void removeDataSet() {
@@ -937,84 +886,84 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     }
 
 
-//    Activity Lifecycle
+    //    Activity Lifecycle
     @Override
     protected void onResume() {
-        Log.v("Actlif","onResume Called");
+        Log.v("Actlif", "onResume Called");
         super.onResume();
 
     }
 
     @Override
     protected void onStart() {
-        Log.v("Actlif","onStart Called");
+        Log.v("Actlif", "onStart Called");
         super.onStart();
     }
 
     @Override
     protected void onStop() {
-        Log.v("Actlif","onStop Called");
+        Log.v("Actlif", "onStop Called");
         super.onStop();
 
     }
 
     @Override
     protected void onPause() {
-        Log.v("Actlif","onPause Called");
+        Log.v("Actlif", "onPause Called");
         super.onPause();
 
     }
 
     @Override
     protected void onDestroy() {
-        Log.v("Actlif","onDestroy Called");
+        Log.v("Actlif", "onDestroy Called");
         super.onDestroy();
 //        removeDataSet();
 
-        if (thread0!=null){
+        if (thread0 != null) {
             thread3.interrupt();
-            canStream=false;
+            canStream = false;
 
             tryDisconnect(sewDevice);
-            Log.v("sewdevice", "Thread0 interrupted:  "+String.valueOf(thread3.isInterrupted()));
+            Log.v("sewdevice", "Thread0 interrupted:  " + String.valueOf(thread3.isInterrupted()));
         }
-        if (thread1!=null){
+        if (thread1 != null) {
             thread3.interrupt();
-            canStream=false;
+            canStream = false;
 
             tryDisconnect(sewDevice);
-            Log.v("sewdevice", "Sew State:  "+String.valueOf(isConnected(sewDevice)));
-            Log.v("sewdevice", "Thread1 interrupted:  "+String.valueOf(thread3.isInterrupted()));
+            Log.v("sewdevice", "Sew State:  " + String.valueOf(isConnected(sewDevice)));
+            Log.v("sewdevice", "Thread1 interrupted:  " + String.valueOf(thread3.isInterrupted()));
         }
-        if (thread2!=null){
+        if (thread2 != null) {
             thread3.interrupt();
-            canStream=false;
+            canStream = false;
 
             tryDisconnect(sewDevice);
-            Log.v("sewdevice", "Sew State:  "+String.valueOf(isConnected(sewDevice)));
-            Log.v("sewdevice", "Thread2 interrupted:  "+String.valueOf(thread3.isInterrupted()));
+            Log.v("sewdevice", "Sew State:  " + String.valueOf(isConnected(sewDevice)));
+            Log.v("sewdevice", "Thread2 interrupted:  " + String.valueOf(thread3.isInterrupted()));
         }
-        if (thread3!=null){
+        if (thread3 != null) {
             thread3.interrupt();
-            canStream=false;
+            canStream = false;
 
             tryDisconnect(sewDevice);
-            Log.v("sewdevice", "Sew State:  "+String.valueOf(isConnected(sewDevice)));
-            Log.v("sewdevice", "StreamThread interrupted:  "+String.valueOf(thread3.isInterrupted()));
+            Log.v("sewdevice", "Sew State:  " + String.valueOf(isConnected(sewDevice)));
+            Log.v("sewdevice", "StreamThread interrupted:  " + String.valueOf(thread3.isInterrupted()));
         }
-        if (poincareThread!=null){
+        if (poincareThread != null) {
             thread3.interrupt();
-            canStream=false;
+            canStream = false;
 
             tryDisconnect(sewDevice);
-            Log.v("sewdevice", "Sew State:  "+String.valueOf(isConnected(sewDevice)));
-            Log.v("sewdevice", "PoincareThread interrupted:  "+String.valueOf(thread3.isInterrupted()));
+            Log.v("sewdevice", "Sew State:  " + String.valueOf(isConnected(sewDevice)));
+            Log.v("sewdevice", "PoincareThread interrupted:  " + String.valueOf(thread3.isInterrupted()));
         }
 
     }
 
 
-    private void setup(){
+    private void setup() {
 
         if (setupThread != null)
             setupThread.interrupt();
@@ -1023,13 +972,12 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
             @Override
             public void run() {
-                Log.v("Runnables","setupRunnable Started");
+                Log.v("Runnables", "setupRunnable Started");
 
 
                 setupChart();
                 setupSensor();
                 runDataStreamThread();
-
 
 
             }
@@ -1043,7 +991,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
                 try {
                     runOnUiThread(setupRunnable);
-                    Log.v("Runnables","setupRunnable Done");
+                    Log.v("Runnables", "setupRunnable Done");
                     Thread.sleep(0);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -1056,11 +1004,10 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         setupThread.start();
 
 
-
     }
 
 
-//    Interfaces Overrides
+    //    Interfaces Overrides
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
     }
@@ -1073,19 +1020,19 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     @Override
     public void fftSize(int n) {
 
-        i=0;
-        size=n;
-        in=new float[size];
-        complexArray=new Complex[size];
-        fftOut =new Complex[size];
-        out =new float[size/2];
+        i = 0;
+        size = n;
+        in = new float[size];
+        complexArray = new Complex[size];
+        fftOut = new Complex[size];
+        out = new float[size / 2];
         showToast(String.valueOf(size));
     }
 
     @Override
     public void timeSize(int n) {
 
-        visibility_range=n;
+        visibility_range = n;
 
         chart.fitScreen();
         showToast(String.valueOf(visibility_range));
