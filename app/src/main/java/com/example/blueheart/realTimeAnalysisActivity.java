@@ -1,35 +1,27 @@
 package com.example.blueheart;
 
 import android.graphics.Color;
-import android.hardware.SensorEvent;
+import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
-import android.widget.Toast;
 
-import com.github.mikephil.charting.charts.CombinedChart;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
-import com.github.mikephil.charting.data.CombinedData;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.data.ScatterData;
-import com.github.mikephil.charting.data.ScatterDataSet;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
-
 
 import java.util.ArrayList;
 import java.util.List;
-
 
 import sew.CommunicationException;
 import sew.DeviceException;
@@ -38,6 +30,8 @@ import sew.RegularDataBlock;
 import sew.SewBluetoothDevice;
 
 import static com.example.blueheart.deviceListActivity.sewDevice;
+import static com.example.blueheart.utilities.showToast;
+import static com.example.blueheart.sensorUtilities.*;
 
 
 public class realTimeAnalysisActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener, parameterSend {
@@ -199,7 +193,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
             @Override
             public void onItemSelected(AdapterView<?> parent, View view,
                                        int pos, long id) {
-                showToast((String) parent.getItemAtPosition(pos));
+                showToast(getApplicationContext(),(String) parent.getItemAtPosition(pos));
                 switch (pos) {
                     case 0:
                         whatFragment = 0;
@@ -281,7 +275,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                 Log.v("sewdevice", "created");
                 Log.v("sewdevice", sewDevice.getAddress());
             } else {
-                showToast("Selected!= found");
+                showToast(getApplicationContext(),"Selected!= found");
             }
         }
 
@@ -857,104 +851,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
     }
 
-    private void tryConnect(SewBluetoothDevice s) {
-        try {
-            Log.v("sewdevice", "Connecting....");
-            s.connect();
-            Log.v("sewdevice", "Connected");
-        } catch (CommunicationException e) {
-            e.printStackTrace();
-        } catch (DeviceException e) {
-            e.printStackTrace();
-        }
 
-    }
-
-    private void tryDisconnect(SewBluetoothDevice s) {
-        try {
-            Log.v("sewdevice", "Disconnecting...");
-            s.disconnect();
-            Log.v("sewdevice", "Disconnected");
-        } catch (CommunicationException e) {
-            e.printStackTrace();
-        } catch (DeviceException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    private int isConnected(SewBluetoothDevice s) {
-        try {
-            int stat;
-            Log.v("sewdevice", "Checking Status...");
-            stat = s.getStatus();
-            Log.v("sewdevice", "Status=  " + stat);
-            return stat;
-
-
-        } catch (CommunicationException e) {
-            e.printStackTrace();
-        }
-        return -1;
-    }
-
-    private void tryStream(SewBluetoothDevice s) {
-        try {
-            Log.v("sewdevice", "Starting Stream....");
-            s.startStreaming();
-            Log.v("sewdevice", "Streaming Started!");
-        } catch (CommunicationException e) {
-            e.printStackTrace();
-        } catch (DeviceException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    private void tryStopStream(SewBluetoothDevice s) {
-        try {
-            Log.v("sewdevice", "Stopping Stream....");
-            s.stopStreaming();
-            Log.v("sewdevice", "Streaming Stopped!");
-        } catch (CommunicationException e) {
-            e.printStackTrace();
-        } catch (DeviceException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    private boolean isInStreaming(SewBluetoothDevice s) {
-        try {
-            boolean is;
-            Log.v("sewdevice", "Checking Stream...");
-            is = s.isStreaming();
-            if (is) {
-                Log.v("sewdevice", "Is streaming");
-                return true;
-
-            } else {
-                Log.v("sewdevice", "Not streaming");
-                return false;
-            }
-
-        } catch (CommunicationException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    private long tryGetClock(SewBluetoothDevice s) {
-
-        try {
-
-            return s.getClock();
-
-        } catch (CommunicationException e) {
-            e.printStackTrace();
-        }
-        return -1;
-    }
 
     private void runDataStreamThread() {
 
@@ -1140,9 +1037,9 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 //
 //    }
 
-    public void showToast(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
-    }
+//    public void showToast(String message) {
+//        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+//    }
 
     private void removeDataSet() {
 
@@ -1265,7 +1162,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         complexArray = new Complex[size];
         fftOut = new Complex[size];
         out = new float[size / 2];
-        showToast(String.valueOf(size));
+        showToast(getApplicationContext(),String.valueOf(size));
     }
 
     @Override
@@ -1274,7 +1171,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         visibility_range = n;
 
         chart.fitScreen();
-        showToast(String.valueOf(visibility_range));
+        showToast(getApplicationContext(),String.valueOf(visibility_range));
     }
 
     @Override
