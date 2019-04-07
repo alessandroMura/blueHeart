@@ -11,8 +11,6 @@ import android.widget.Button;
 public class chooseAnalysisTypeActivity extends AppCompatActivity implements View.OnClickListener {
     static public String MAIN_BUTTON_MESSAGE="Choose Analysis type Activity Button";
 
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -22,10 +20,6 @@ public class chooseAnalysisTypeActivity extends AppCompatActivity implements Vie
         real_time_button.setOnClickListener(this);
         Button record_and_send_log=findViewById(R.id.record_and_send);
         record_and_send_log.setOnClickListener(this);
-
-
-
-
     }
 
     @Override
@@ -35,7 +29,6 @@ public class chooseAnalysisTypeActivity extends AppCompatActivity implements Vie
                 Log.v(MAIN_BUTTON_MESSAGE,"Real Time Analysis chosen!");
                 Intent start_real_time=new Intent(this, realTimeAnalysisActivity.class);
                 startActivity(start_real_time);
-
                 break;
             case R.id.record_and_send:
                 Log.v(MAIN_BUTTON_MESSAGE,"Record and send chosen!");

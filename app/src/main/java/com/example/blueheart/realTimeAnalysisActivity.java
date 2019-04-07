@@ -30,7 +30,7 @@ import sew.RegularDataBlock;
 import sew.SewBluetoothDevice;
 
 import static com.example.blueheart.deviceListActivity.sewDevice;
-import static com.example.blueheart.utilities.showToast;
+import static com.example.blueheart.utilities.*;
 import static com.example.blueheart.sensorUtilities.*;
 
 

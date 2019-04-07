@@ -8,7 +8,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
+import static com.example.blueheart.utilities.*;
 
 
 //Activity principale che gestisce l'accensione del bluetooth
@@ -57,14 +57,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 Log.v(MAIN_BUTTON_MESSAGE, "BtOn clicked!");
                 if (!mBlueAdapter.isEnabled()){
-                    showToast("Turning On Bluetooth...");
+                    showToast(getApplicationContext(),"Turning On Bluetooth...");
                     //intent che attiva il bluetooth
                     Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                     startActivityForResult(intent, REQUEST_ENABLE_BT);
-                    showToast("Bluetooth ON");
+                    showToast(getApplicationContext(),"Bluetooth ON");
                 }
                 else {
-                    showToast("Bluetooth is already on");
+                    showToast(getApplicationContext(),"Bluetooth is already on");
                 }
 
 
@@ -77,11 +77,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 if (mBlueAdapter.isEnabled()){
                     mBlueAdapter.disable();
-                    showToast("Turning Bluetooth Off");
+                    showToast(getApplicationContext(),"Turning Bluetooth Off");
 
                 }
                 else {
-                    showToast("Bluetooth is already off");
+                    showToast(getApplicationContext(),"Bluetooth is already off");
                 }
 
                 break;
@@ -91,10 +91,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Log.v(MAIN_BUTTON_MESSAGE, "Make_discoverable clicked!");
 
                 if (!mBlueAdapter.isDiscovering()){
-                    showToast("Making Your Device Discoverable");
+                    showToast(getApplicationContext(),"Making Your Device Discoverable");
                     Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
                     startActivityForResult(intent, REQUEST_DISCOVER_BT);
-                    showToast("Device is now Discoverable");
+                    showToast(getApplicationContext(),"Device is now Discoverable");
                 }
 
                 break;
@@ -105,7 +105,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Log.v(MAIN_BUTTON_MESSAGE, "Device_list clicked!");
 
 
-                showToast("Listing Paired Devices");
+                showToast(getApplicationContext(),"Listing Paired Devices");
                 startActivity(deviceListIntent);
                 break;
             default:
@@ -121,7 +121,4 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //    return mBlueAdapter;
 //    }
 
-    public void showToast(String message){
-        Toast.makeText(this,message,Toast.LENGTH_SHORT).show();
-    }
 }

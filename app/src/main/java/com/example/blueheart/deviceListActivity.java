@@ -1,8 +1,6 @@
 package com.example.blueheart;
 
 //Import delle classi utilizzate
-
-
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.os.Bundle;
@@ -11,14 +9,13 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.Toast;
-
 
 import java.util.ArrayList;
 import java.util.Set;
 
-import sew.DeviceFinder;
 import sew.SewBluetoothDevice;
+
+import static com.example.blueheart.utilities.*;
 
 
 //Activity che gestisce i device bluetooth in cui è possibile selezionare il device per l'acquisizione
@@ -28,14 +25,9 @@ public class deviceListActivity extends AppCompatActivity {
     static public String MAIN_BUTTON_MESSAGE="Device List Activity Button";
 
     //    inizializzazione Adapter Bluetooth
-
     static public SewBluetoothDevice sewDevice;
     static public String currentID;
     static public String currentAddress;
-
-
-
-
 
     //Override del metodo onCreate che setta la listview con i device accoppiati all'interno
     @Override
@@ -48,14 +40,12 @@ public class deviceListActivity extends AppCompatActivity {
             Set<BluetoothDevice> devices = MainActivity.mBlueAdapter.getBondedDevices();
             final ArrayList<BluetoothDevice> devs=new ArrayList<>();
             for (BluetoothDevice device: devices){
-                Log.v(MainActivity.MAIN_BUTTON_MESSAGE,MainActivity.toString("\nDevice: " + device.getName()+ ", " + device));
+                Log.v(MAIN_BUTTON_MESSAGE,MainActivity.toString("\nDevice: " + device.getName()+ ", " + device));
                 devs.add(device);
             }
             final deviceAdapter itemsAdapter = new deviceAdapter(this, devs);
             final ListView listView = findViewById(R.id.list);
             listView.setAdapter(itemsAdapter);
-
-
 
             listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
@@ -67,34 +57,22 @@ public class deviceListActivity extends AppCompatActivity {
 
                     if (currentID.substring(0,3).equals("sew")){
                         Intent choose_analysis = new Intent(deviceListActivity.this, chooseAnalysisTypeActivity.class);
-                        showToast("Choose Analysis");
+                        showToast(getApplicationContext(),"Choose Analysis");
                         startActivity(choose_analysis);
                     }
                     else {
-                        showToast("Not a sew device! ");
+                        showToast(getApplicationContext(),"Not a sew device! ");
                     }
-
-
-
                 }
             });
-
-
-
         }
         else {
             //bluetooth is off so can't get paired devices
-            showToast("Turn on bluetooth to get paired devices");
+            showToast(getApplicationContext(),"Turn on bluetooth to get paired devices");
         }
 
 
 
     }
-
-
-    public void showToast(String message){
-        Toast.makeText(this,message,Toast.LENGTH_SHORT).show();
-    }
-
 
 }
