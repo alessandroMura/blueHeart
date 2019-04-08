@@ -60,3 +60,7 @@ dependencies {
 dependencies {
     implementation 'com.android.support:support-v4:28.+'
 }
+
+dependencies {
+    implementation 'com.github.karlotoy:perfectTune:1.0.2'
+}

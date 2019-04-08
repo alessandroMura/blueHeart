@@ -1,6 +1,9 @@
 package com.example.blueheart;
 
+import android.content.Context;
 import android.graphics.Color;
+import android.media.AudioManager;
+import android.media.ToneGenerator;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
@@ -19,6 +22,7 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
+import com.karlotoy.perfectune.instance.PerfectTune;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -145,6 +149,17 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
     private PanTompkins pan = new PanTompkins(250);
 
+
+    private boolean lookfor=true;
+    private float max=-100000;
+    private float min=100000;
+    private int c=0;
+
+    private PerfectTune perfectTune = new PerfectTune();
+
+
+
+
     //    Inizializzazione oggetti thread
     private Thread setupThread;
     private Thread thread0;
@@ -152,15 +167,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     private Thread thread2;
     private Thread thread3;
     private Thread poincareThread;
-
-
-// Variabili nuove per l'utilizzo della combined chart
-//    private int count=0;
-//    private CombinedChart mChart;
-//    private CombinedData cData;
-//    private float max=-100000;
-//    private float min=100000;
-//    private boolean lookfor=true;
+    private ToneGenerator toneG;
 
 
     @Override
@@ -184,6 +191,10 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         // Apply the adapter to the spinner
         spinner.setAdapter(adapter);
+
+
+
+        toneG = new ToneGenerator(AudioManager.STREAM_ALARM, 50);
 
 
         setup();
@@ -324,178 +335,8 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
     }
 
-//    private void initialSetupCombinedChart() {
-//
-//        mChart = findViewById(R.id.chart1);
-//
-//        // enable description text
-//        mChart.getDescription().setEnabled(false);
-//
-////        mChart.setNoDataText("No data yet");
-//        mChart.setDrawGridBackground(false);
-//        // enable touch gestures
-//        mChart.setTouchEnabled(true);
-//        // enable scaling and dragging
-//        mChart.setDragEnabled(true);
-//        mChart.setScaleEnabled(true);
-//        mChart.setDrawGridBackground(false);
-//        // if disabled, scaling can be done on x- and y-axis separately
-//        mChart.setPinchZoom(true);
-//
-//        mChart.setVisibleXRangeMaximum(100);
-//
-//        XAxis x1 = mChart.getXAxis();
-//        x1.setDrawGridLines(false);
-////        x1.setAxisMaximum(250);
-//        x1.setAvoidFirstLastClipping(true);
-//        x1.setEnabled(true);
-//
-//
-//        YAxis y1 = mChart.getAxisLeft();
-//        y1.setAxisMaximum(30);
-//        y1.setAxisMinimum(-30);
-//        y1.setDrawGridLines(true);
-//
-//
-//        YAxis y12 = mChart.getAxisRight();
-//        y12.setEnabled(false);
-//
-//        mChart.getLegend().setEnabled(false);
-//
-//        cData = new CombinedData();
-//
-//        cData.setData(generateVoidLineData());
-//        cData.setData(generateVoidScatterData());
-//
-//
-//        mChart.setData(cData);
-//        mChart.invalidate();
-//    }
 
-
-
-
-//    protected ScatterData generateVoidScatterData() {
-//        ScatterData d = new ScatterData();
-//        d.addDataSet(createScatterDataSet("scatter",Color.BLUE));
-//        return d;
-//    }
-//
-//    private LineData generateVoidLineData() {
-//        LineData d = new LineData();
-//        d.addDataSet(createLineDataSet("line1",Color.BLACK));
-//        d.addDataSet(createLineDataSet("line2",Color.RED));
-//        return d;
-//    }
-//
-//
-//    private LineDataSet createLineDataSet(String label, int color){
-//        LineDataSet set = new LineDataSet(null,label);
-//        set.setDrawCircles(false);
-//        set.setDrawValues(false);
-//        set.setColor(color);
-//        set.setAxisDependency(YAxis.AxisDependency.LEFT);
-//        return set;
-//    }
-//
-//    public ScatterDataSet createScatterDataSet(String label, int color){
-//        ScatterDataSet set = new ScatterDataSet(null,label);
-//        set.setScatterShapeSize(10f);
-//        set.setDrawValues(true);
-//        set.setValueTextSize(10f);
-//        set.setDrawValues(false);
-//        set.setColor(color);
-//        set.setAxisDependency(YAxis.AxisDependency.LEFT);
-//        return set;
-//    }
-//
-//
-//    public void AddScatterEntry(float Value,int color,int delay){
-//
-//        CombinedData data = mChart.getData();
-//        if (data != null) {
-//            ScatterData scatterDataData = data.getScatterData();
-//            if(scatterDataData != null){
-//
-//                ScatterDataSet set = (ScatterDataSet) data.getDataSetByIndex(2);
-//                if (set == null) {
-//
-//                    set = createScatterDataSet("scatter",color);
-//                    data.addDataSet(set);
-//                }
-//
-//                LineData lineData = data.getLineData();
-//                if(lineData != null) {
-//
-//                    LineDataSet pakk = (LineDataSet) data.getDataSetByIndex(0);
-//                    scatterDataData.addEntry(new Entry(pakk.getEntryCount()-delay, Value), 0);
-//
-//                }
-//                mChart.notifyDataSetChanged();
-//                mChart.invalidate();
-//            }
-//
-//            data.notifyDataChanged();
-//            // let the chart know it's data has changed
-//            mChart.notifyDataSetChanged();
-//            mChart.invalidate();
-//            mChart.setVisibleXRangeMaximum(250);
-//
-//            count=count+1;
-//            Log.v("countnum",String.valueOf(count));
-//            //int valueCount = data.getXValCount();
-//            mChart.moveViewToX(scatterDataData.getEntryCount());
-//        }
-//    }
-//
-//
-//
-//    public void AddLineEntry(float Value,float Value2){
-//
-//        CombinedData data = mChart.getData();
-//        if (data != null) {
-//            LineData lineData = data.getLineData();
-//
-//            if (lineData != null) {
-//                ILineDataSet set = (ILineDataSet) data.getDataSetByIndex(0);
-//                ILineDataSet set2 = (ILineDataSet) data.getDataSetByIndex(0);
-//                if (set == null) {
-//                    set = createLineDataSet("line1",Color.BLACK);
-//                    set2 = createLineDataSet("line1",Color.BLUE);
-//                    lineData.addDataSet(set);
-//                    lineData.addDataSet(set2);
-//                }
-//                if (set2 == null) {
-//                    set2 = createLineDataSet("line1",Color.BLUE);
-//                    lineData.addDataSet(set2);
-//
-//
-//                }
-//                lineData.addEntry(new Entry(set.getEntryCount(), Value), 0);
-//                lineData.addEntry(new Entry(set.getEntryCount(), Value2), 1);
-//
-//                Log.v("datast",String.valueOf(data.getAllData()));
-//
-//
-//                mChart.notifyDataSetChanged();
-//                mChart.invalidate();
-//            }
-//
-//
-//            data.notifyDataChanged();
-//
-//            // let the chart know it's data has changed
-//            mChart.notifyDataSetChanged();
-//            mChart.invalidate();
-//            mChart.setVisibleXRangeMaximum(250);
-//            //int valueCount = data.getXValCount();
-//            mChart.moveViewToX(lineData.getEntryCount());
-//
-//
-//        }
-//    }
-
-    private void setData0() {
+    private void setData0(float Value) {
 
         LineData data = chart.getData();
         if (data != null) {
@@ -504,7 +345,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                 set = createSet();
                 data.addDataSet(set);
             }
-            data.addEntry(new Entry(set.getEntryCount(), value0), 0);
+            data.addEntry(new Entry(set.getEntryCount(),Value ), 0);
             data.notifyDataChanged();
 
             // let the chart know it's data has changed
@@ -586,14 +427,15 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
             data.addEntry(new Entry(set.getEntryCount(), datapoint), 0);
             data.addEntry(new Entry(set.getEntryCount(), peakpoint), 1);
             data.notifyDataChanged();
+            c=c+1;
 
             // let the chart know it's data has changed
             chart.notifyDataSetChanged();
 
             YAxis leftAxis = chart.getAxisLeft();
 
-            leftAxis.setAxisMaximum(maxrp);
-            leftAxis.setAxisMinimum(minrp);
+            leftAxis.setAxisMaximum(800);
+            leftAxis.setAxisMinimum(-50);
 
 //            XAxis xAxis=chart.getXAxis();
             // limit the number of visible entries
@@ -656,7 +498,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 //                tempVar = Filter.lowPassNext(value) ;
 //                value0 = Filter.highPassNext(tempVar) ;
 
-                setData0();
+                setData0(value0);
             }
         };
 
@@ -667,8 +509,8 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
 
                 while (buffered) {
-                   runOnUiThread(runnable0);
-                   buffered = false;
+                    runOnUiThread(runnable0);
+                    buffered = false;
                     Log.v("Runnables", "FeedMultiple0 Done");
 //                    try {
 //                        Thread.sleep(0);
@@ -820,7 +662,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                 Log.v("sewdevice", "Max:  " + maxrp + "");
                 Log.v("sewdevice", "Min:  " + minrp + "");
                 Log.v("sewdevice", "Range:  " + rangerp + "");
-                setPoincareData(poincareValue, peakp);
+//                setPoincareData(poincareValue, peakp);
 
 
             }
@@ -918,11 +760,11 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
             switch (whatFragment) {
                 case 0:
                     buffered = true;
-//                    value0=pan.highpass.next(pan.lowpass.next(value));
-                   value0=pan.next(value,(long) time);
+                    value0=pan.highpass.next(pan.lowpass.next(value));
+//                    value0=pan.next(value,(long) time);
 
 
-                    setData0();
+                    setData0(value0);
                     break;
                 case 1:
                     in[i] = value;
@@ -952,17 +794,18 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                     minrp = stats.min;
                     maxrp = stats.max;
                     rangerp = stats.range;
-                    if (poincareValue > 70f) {
-                        Log.v("sewdevice", "Peak finder:  Value= " + poincareValue);
-                        peakp = maxrp;
-
-                    } else {
-                        peakp = 0f;
-                    }
-                    Log.v("sewdevice", "Max:  " + maxrp + "");
-                    Log.v("sewdevice", "Min:  " + minrp + "");
-                    Log.v("sewdevice", "Range:  " + rangerp + "");
-                    setPoincareData(poincareValue, peakp);
+//                    if (poincareValue > 70f) {
+//                        Log.v("sewdevice", "Peak finder:  Value= " + poincareValue);
+//                        peakp = maxrp;
+//
+//                    } else {
+//                        peakp = 0f;
+//                    }
+//                    Log.v("sewdevice", "Max:  " + maxrp + "");
+//                    Log.v("sewdevice", "Min:  " + minrp + "");
+//                    Log.v("sewdevice", "Range:  " + rangerp + "");
+//                    setPoincareData(poincareValue, peakp);
+                    peakDetector(poincareValue,250,c);
                     break;
 
                 default:
@@ -975,53 +818,40 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
     }
 
-//    @Override
-//    public final void onSensorChanged(SensorEvent event) {
-//        if(plotData){
-//            Log.v("sensoracc",String.valueOf(event.values[1]));
-//
-//
-//
-//            peakDetector(event.values[1],50,count);
-//
-//            AddLineEntry(event.values[1],-10000);
-////            AddLineEntry2(event.values[2]);
-//            plotData = false;
-//
-//        }
-//    }
-//
-//
-//
-//    public void peakDetector(float in, float delta, int count){
-//        if (count==0){
-//            max=-100000;
-//            min=100000;
-//            lookfor=true;
-//            c=0;
-//        }
-//        if (in>max){max=in;}
-//        if (in<min){min=in;}
-//        if(lookfor){
-//            if (in<max-delta){
-//                AddScatterEntry(-1000,Color.BLUE,0);
-//                min=in;
-//                lookfor=false;
-//            }else{
-//                AddScatterEntry(-1000,Color.BLUE,0);
-//            }
-//
-//
-//        }else{
-//            if (in>min+delta){
-//                AddScatterEntry(in,Color.BLUE,0);
-//                max=in;
-//                lookfor=true;
-//            }else{
-//                AddScatterEntry(-1000,Color.BLUE,0);
-//            }
-//        }
-//    }
+
+    public void peakDetector(float in, float delta, int count){
+        if (count==0){
+            max=-100000;
+            min=100000;
+            lookfor=true;
+            c=0;
+        }
+        if (in>max){max=in;}
+        if (in<min){min=in;}
+        if(lookfor){
+            if (in<max-delta){
+                setPoincareData(poincareValue,0);
+                min=in;
+                lookfor=false;
+            }else{
+                setPoincareData(poincareValue,0);
+            }
+
+
+        }else{
+            if (in>min+delta && in<600){
+
+                max=in;
+                lookfor=true;
+                toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 200);
+                setPoincareData(poincareValue,in);
+
+
+            }else{
+                setPoincareData(poincareValue,0);
+            }
+        }
+    }
 
 
 //    @Override
@@ -1091,6 +921,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     protected void onPause() {
         Log.v("Actlif", "onPause Called");
         super.onPause();
+        c=0;
 
     }
 
