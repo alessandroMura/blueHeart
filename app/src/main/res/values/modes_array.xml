@@ -2,6 +2,7 @@
 <resources>
     <string-array name="modes_array">
         <item>-Time Domain</item>
+        <item>-R-Peaks Detection</item>
         <item>-Frequency Domain (Magnitude)</item>
         <item>-Frequency Domain (Phase)</item>
         <item>-Poincare Plot RR(n)-RR(n+1)</item>

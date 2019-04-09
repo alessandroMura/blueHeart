@@ -26,12 +26,11 @@ import static com.example.blueheart.graphUtilities.*;
 
 public class realTimeAnalysisActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener, parameterSend {
 
-    //Graphic elements Initialization
-    Fragment timeDomainFrag, freqMagFrag, freqPhasFrag, poincarFrag, lagPoincarFrag;
+//    Graphic elements Initialization ..............................................................
+    Fragment timeDomainFrag, freqMagFrag, freqPhasFrag, poincarFrag, lagPoincarFrag,RPeaksFrag;
     Spinner spinner;
     private LineChart chart;
-
-    //Options
+//    Options ......................................................................................
     private int visibility_range = 1024; //Numero campioni visualizzati nel grafico temporale all'inizializzazione
     private static int size = 512; //Numero campioni per la FFT all'inizializzazione
     private Complex complexArray[] = new Complex[size]; //Array di complessi per la fft in ingresso
@@ -42,49 +41,53 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     private float poincareValue = 0;
     private float value0 = 0;
 
-    // Boolean Variables
+//    Boolean Variables ........................................................................
     private static boolean buffered = true;
     private boolean canStream = true;
     private boolean streamtofeed;
     private int whatFragment;
     private int i = 0;
 
-    //Parametri, oggetti e variabili per il filtraggio
+
+//    Parametri, oggetti e variabili per il filtraggio ..........................................
     private float minrp = -100f;
     private float maxrp = 100f;
     private float rangerp = 200f;
     private float peakp;
     private long start;
+    private long startPeaks;
+    private double timepeakdetector;
+    private double rpeaktime;
+    private double peaktimevector[]=new double[500];
     private double time;
-
     private float max=-100000;
     private float min=100000;
     private boolean lookfor=true;
     private int c=0;
 
-
+//Filtri non più utilizzati .....................................................................
     private HeartyFilter.SavGolayFilter savgol = new HeartyFilter.SavGolayFilter(1);
     private HeartyFilter.StatFilter stats = new HeartyFilter.StatFilter();
-
     private LmeFilter lp = new LmeFilter(LP2_B, LP2_A);
     private LmeFilter hp = new LmeFilter(HP2_B, HP2_A);
-
     private LmeFilter notch = new LmeFilter(NOTCH_B,NOTCH_A);
-
     private LmeFilter.WndIntFilter meanw = new LmeFilter.WndIntFilter(5);
+//    ...........................................................................................
 
+//    Inizializzazione oggetti per il Pan Tompkins ..............................................
     private PanTompkins pan = new PanTompkins(SEW_SAMPLING_RATE);
-
     private PerfectTune perfectTune = new PerfectTune();
+    private ToneGenerator toneG;
+//    ...........................................................................................
 
-    //    Inizializzazione oggetti thread
+//    Inizializzazione oggetti thread ............................................................
     private Thread setupThread;
     private Thread thread0;
     private Thread thread1;
     private Thread thread2;
     private Thread thread3;
-    private Thread poincareThread;
-    private ToneGenerator toneG;
+//    ............................................................................................
+
 
 
     @Override
@@ -101,6 +104,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         freqPhasFrag = new frequencyPhaseFragment();
         poincarFrag = new poincarePlotFragment();
         lagPoincarFrag = new laggedPoincareFragment();
+        RPeaksFrag=new RPeaksFragment();
 
         // Create an ArrayAdapter using the string array and a default spinner layout
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
@@ -126,19 +130,24 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                         break;
                     case 1:
                         whatFragment = 1;
-                        setFragment(freqMagFrag,getSupportFragmentManager(),R.id.fragment_frame);
+                        c=0;
+                        setFragment(RPeaksFrag,getSupportFragmentManager(),R.id.fragment_frame);
                         break;
                     case 2:
                         whatFragment = 2;
-                        setFragment(freqPhasFrag,getSupportFragmentManager(),R.id.fragment_frame);
+                        setFragment(freqMagFrag,getSupportFragmentManager(),R.id.fragment_frame);
                         break;
                     case 3:
                         whatFragment = 3;
-
-                        setFragment(poincarFrag,getSupportFragmentManager(),R.id.fragment_frame);
+                        setFragment(freqPhasFrag,getSupportFragmentManager(),R.id.fragment_frame);
                         break;
                     case 4:
                         whatFragment = 4;
+
+                        setFragment(poincarFrag,getSupportFragmentManager(),R.id.fragment_frame);
+                        break;
+                    case 5:
+                        whatFragment = 5;
                         setFragment(lagPoincarFrag,getSupportFragmentManager(),R.id.fragment_frame);
                         break;
                 }
@@ -337,6 +346,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                                     for (int z = 0; z < signal.length; z++) {
 
                                         time = (System.nanoTime() - start) / 1_000_000_000.0;
+                                        Log.v("Timing",String.valueOf(time));
                                         value = signal[z];
                                         streamtofeed = true;
                                         onSensorc();
@@ -365,7 +375,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                 }
             }
         });
-
         thread3.start();
 
     }
@@ -380,7 +389,17 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                     setData0(chart,value0,visibility_range);
                     break;
                 case 1:
-                    in[i] = value;
+                    if (c==0){
+                        startPeaks=System.nanoTime();
+                        timepeakdetector=0;
+                    }
+                    buffered = true;
+                    poincareValue = pan.next(value, (long) time);
+                    peakDetector(poincareValue,250,c);
+                    c++;
+                    break;
+                case 2:
+                    in[i] = pan.highpass.next(pan.lowpass.next(value));
                     i++;
                     if (i == size) {
                         buffered = true;
@@ -388,8 +407,8 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                         i = 0;
                     }
                     break;
-                case 2:
-                    in[i] = value;
+                case 3:
+                    in[i] = pan.highpass.next(pan.lowpass.next(value));
                     i++;
                     if (i == size) {
                         buffered = true;
@@ -397,7 +416,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                         i = 0;
                     }
                     break;
-                case 3:
+                case 4:
                     buffered = true;
                     poincareValue = pan.next(value, (long) time);
                     peakDetector(poincareValue,250,c);
@@ -413,13 +432,25 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
     }
 
+    int countp=0;
     public void peakDetector(float in, float delta,int count){
         if (count==0){
             max=-100000;
             min=100000;
             lookfor=true;
             c=0;
+            timepeakdetector=0;
+            countp=0;
+            peaktimevector=new double[500];
+
+
+//            for (int i=0;i<peaktimevector.length;i++) {
+//                Log.v("Timing", "Peak Time Vector" + "------------" + String.valueOf(peaktimevector[i]));
+//            }
+
         }
+        timepeakdetector=(System.nanoTime() - startPeaks) / 1_000_000_000.0;
+        Log.v("Timing","Current peak detector time"+String.valueOf(timepeakdetector));
         if (in>max){max=in;}
         if (in<min){min=in;}
         if(lookfor){
@@ -434,6 +465,15 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
         }else{
             if (in>min+delta && in<600){
+                rpeaktime=timepeakdetector;
+                Log.v("Timing","Current peak time"+"------------"+String.valueOf(timepeakdetector));
+                peaktimevector[countp]=rpeaktime;
+
+                if(countp>2){
+                    double diff=peaktimevector[countp]-peaktimevector[countp-1];
+                    Log.v("Timing","Diff between current r and previous  "+String.valueOf(diff));
+                }
+                countp++;
                 max=in;
                 lookfor=true;
                 toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 200);
@@ -447,32 +487,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     }
 
     //    Activity Lifecycle
-    @Override
-    protected void onResume() {
-        Log.v("Actlif", "onResume Called");
-        super.onResume();
-    }
-
-    @Override
-    protected void onStart() {
-        Log.v("Actlif", "onStart Called");
-        super.onStart();
-    }
-
-    @Override
-    protected void onStop() {
-        Log.v("Actlif", "onStop Called");
-        super.onStop();
-
-    }
-
-    @Override
-    protected void onPause() {
-        Log.v("Actlif", "onPause Called");
-        super.onPause();
-        c=0;
-    }
-
     @Override
     protected void onDestroy() {
         Log.v("Actlif", "onDestroy Called");
@@ -510,17 +524,35 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
             Log.v("sewdevice", "Sew State:  " + String.valueOf(isConnected(sewDevice)));
             Log.v("sewdevice", "StreamThread interrupted:  " + String.valueOf(thread3.isInterrupted()));
         }
-        if (poincareThread != null) {
-            thread3.interrupt();
-            canStream = false;
-
-            tryDisconnect(sewDevice);
-            Log.v("sewdevice", "Sew State:  " + String.valueOf(isConnected(sewDevice)));
-            Log.v("sewdevice", "PoincareThread interrupted:  " + String.valueOf(thread3.isInterrupted()));
-        }
 
     }
 
+    @Override
+    protected void onResume() {
+        Log.v("Actlif", "onResume Called");
+        super.onResume();
+    }
+
+    @Override
+    protected void onStart() {
+        Log.v("Actlif", "onStart Called");
+        super.onStart();
+    }
+
+    @Override
+    protected void onStop() {
+        Log.v("Actlif", "onStop Called");
+        super.onStop();
+
+    }
+
+    @Override
+    protected void onPause() {
+        Log.v("Actlif", "onPause Called");
+        super.onPause();
+        c=0;
+        timepeakdetector=0;
+    }
 
     //    Interfaces Overrides
     @Override
@@ -545,6 +577,13 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
     @Override
     public void timeSize(int n) {
+        visibility_range = n;
+        chart.fitScreen();
+        showToast(getApplicationContext(),String.valueOf(visibility_range));
+    }
+
+    @Override
+    public void timeSize2(int n) {
         visibility_range = n;
         chart.fitScreen();
         showToast(getApplicationContext(),String.valueOf(visibility_range));

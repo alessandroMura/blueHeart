@@ -1,7 +1,5 @@
 package com.example.blueheart;
 
-
-
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -13,18 +11,21 @@ import android.widget.Button;
 import android.widget.TextView;
 
 
-public class frequencyMagnitudeFragment extends Fragment implements View.OnClickListener, parameterSend {
+public class RPeaksFragment extends Fragment implements View.OnClickListener, parameterSend  {
 
-    Button plusb;
-    Button minusb;
-    TextView fftsize;
-    View v;
+    View v2;
+    Button plusb2;
+    Button minusb2;
+    TextView samples_number2;
+    parameterSend time_size2;
 
-    int p=2;
-    int exp=2;
-    private parameterSend sendFFTSize;
 
-    public frequencyMagnitudeFragment(){
+    int p2=2;
+    int exp2=2;
+
+
+
+    public RPeaksFragment(){
 
     }
 
@@ -32,41 +33,47 @@ public class frequencyMagnitudeFragment extends Fragment implements View.OnClick
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        v=inflater.inflate(R.layout.fragment_frequency_magnitude, container, false);
-        plusb=v.findViewById(R.id.plus_button);
-        minusb=v.findViewById(R.id.minus_button);
-        minusb.setOnClickListener(this);
-        plusb.setOnClickListener(this);
-        fftsize=v.findViewById(R.id.size_fft);
-
-        return v;
+        v2= inflater.inflate(R.layout.fragment_rpeaks, container, false);
+        plusb2=v2.findViewById(R.id.plus_button_time);
+        minusb2=v2.findViewById(R.id.minus_button_time);
+        plusb2.setOnClickListener(this);
+        minusb2.setOnClickListener(this);
+        samples_number2=v2.findViewById(R.id.time_samples);
+        return v2;
     }
 
     @Override
     public void onClick(View v) {
         switch(v.getId()){
-            case R.id.plus_button:
-                exp++;
-                int res = (int) Math.pow(p, exp);
-                fftsize.setText(String.valueOf(res));
-                sendFFTSize.fftSize(res);
+            case R.id.plus_button_time:
+                exp2++;
+                int res = (int) Math.pow(p2, exp2);
+                samples_number2.setText(String.valueOf(res));
+                time_size2.timeSize2(res);
+
+
                 break;
-            case R.id.minus_button:
-                exp--;
-                int res1 = (int) Math.pow(p, exp);
-                fftsize.setText(String.valueOf(res1));
-                sendFFTSize.fftSize(res1);
+            case R.id.minus_button_time:
+                exp2--;
+                int res1 = (int) Math.pow(p2, exp2);
+                samples_number2.setText(String.valueOf(res1));
+                time_size2.timeSize2(res1);
+
                 break;
             default:
                 break;
+
+
         }
+
     }
+
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
         try {
-            sendFFTSize = (parameterSend) context;
+            time_size2 = (parameterSend) context;
 
         } catch (ClassCastException ignored) {
 
@@ -92,4 +99,6 @@ public class frequencyMagnitudeFragment extends Fragment implements View.OnClick
     public String sendString() {
         return null;
     }
+
+
 }

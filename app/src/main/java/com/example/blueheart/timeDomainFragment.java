@@ -21,11 +21,8 @@ public class timeDomainFragment extends Fragment implements View.OnClickListener
     TextView samples_number;
     parameterSend time_size;
 
-
     int p=2;
     int exp=2;
-
-
 
     public timeDomainFragment(){
 
@@ -41,10 +38,6 @@ public class timeDomainFragment extends Fragment implements View.OnClickListener
         plusb.setOnClickListener(this);
         minusb.setOnClickListener(this);
         samples_number=v.findViewById(R.id.time_samples);
-
-
-
-
         return v;
     }
 
@@ -56,15 +49,12 @@ public class timeDomainFragment extends Fragment implements View.OnClickListener
                 int res = (int) Math.pow(p, exp);
                 samples_number.setText(String.valueOf(res));
                 time_size.timeSize(res);
-
-
                 break;
             case R.id.minus_button_time:
                 exp--;
                 int res1 = (int) Math.pow(p, exp);
                 samples_number.setText(String.valueOf(res1));
                 time_size.timeSize(res1);
-
                 break;
             default:
                 break;
@@ -73,7 +63,6 @@ public class timeDomainFragment extends Fragment implements View.OnClickListener
         }
 
     }
-
 
     @Override
     public void onAttach(Context context) {
@@ -93,6 +82,11 @@ public class timeDomainFragment extends Fragment implements View.OnClickListener
 
     @Override
     public void timeSize(int number) {
+
+    }
+
+    @Override
+    public void timeSize2(int number) {
 
     }
 

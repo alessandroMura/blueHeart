@@ -10,6 +10,7 @@
     <string name="login_button">Login</string>
 
     <string name="time_domain_frag_name">Time Domain</string>
+    <string name="r_peaks_frag_name">Time Domain</string>
 
 
     <string name="frequency_magnitude_frag_name">Frequency Domain - Magnitude</string>
@@ -20,6 +21,9 @@
     <string name="poincare_frag_name">Poincare Plot</string>
     <string name="lagged_poincare_frag_name">Lagged Poincare Plot</string>
     <string name="time_samples">Samples</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 
 
 </resources>
