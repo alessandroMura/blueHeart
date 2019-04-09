@@ -174,7 +174,7 @@ public class graphUtilities {
         l.setEnabled(false);
     }
 
-    public static void setPoincareData(LineChart chart,float datapoint, float peakpoint,int visibility,int count) {
+    public static void setPoincareData(LineChart chart,float datapoint, float peakpoint,int visibility) {
 
         LineData data = chart.getData();
 
@@ -196,7 +196,7 @@ public class graphUtilities {
             data.addEntry(new Entry(set.getEntryCount(), datapoint), 0);
             data.addEntry(new Entry(set.getEntryCount(), peakpoint), 1);
             data.notifyDataChanged();
-            count++;
+
 
             // let the chart know it's data has changed
             chart.notifyDataSetChanged();
@@ -219,6 +219,9 @@ public class graphUtilities {
 
         }
     }
+
+
+
 
 }
 

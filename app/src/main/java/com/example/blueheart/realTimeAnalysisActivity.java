@@ -1,11 +1,10 @@
 package com.example.blueheart;
 
-import android.graphics.Color;
+
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -14,16 +13,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
 import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.Legend;
-import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.components.YAxis;
-import com.github.mikephil.charting.data.Entry;
-import com.github.mikephil.charting.data.LineData;
-import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.karlotoy.perfectune.instance.PerfectTune;
-
-import java.util.ArrayList;
 
 import sew.RegularDataBlock;
 
@@ -67,8 +57,8 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     private long start;
     private double time;
 
-    private float max=MINUS_INFINITE;
-    private float min=PLUS_INFINITE;
+    private float max=-100000;
+    private float min=100000;
     private boolean lookfor=true;
     private int c=0;
 
@@ -153,7 +143,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                         break;
                 }
             }
-
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
             }
@@ -201,7 +190,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
     }
 
-
     private void feedMultiple0() {
 
         if (thread0 != null)
@@ -213,10 +201,8 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
             public void run() {
                 Log.v("Runnables", "FeedMultiple0 Started");
 
-
 //                value0=highpass.next(lowpass.next(value));
                 value0=value;
-
 
                 Log.v("xx", String.valueOf(value0));
 //                value0=hp.next(lp.next(savgol.next(value)));
@@ -224,7 +210,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 //                float tempVar;
 //                tempVar = Filter.lowPassNext(value) ;
 //                value0 = Filter.highPassNext(tempVar) ;
-
                 setData0(chart,value0,visibility_range);
             }
         };
@@ -239,12 +224,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                     runOnUiThread(runnable0);
                     buffered = false;
                     Log.v("Runnables", "FeedMultiple0 Done");
-//                    try {
-//                        Thread.sleep(0);
-//                    }
-//                    catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
                 }
             }
 
@@ -256,10 +235,8 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     }
 
     private void feedMultiple1() {
-
         if (thread1 != null)
             thread1.interrupt();
-
         final Runnable runnable1 = new Runnable() {
 
             @Override
@@ -267,46 +244,30 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                 Log.v("Runnables", "FeedMultiple1 Started");
 
                 out = new float[size];
-
                 for (int s = 0; s < size; s++) {
                     complexArray[s] = new Complex((double) in[s], 0);
                 }
-
                 fftOut = FFT.fft(complexArray);
-
                 for (int z = 0; z < size / 2; z++) {
                     out[z] = (float) fftOut[z].abs();
                 }
-
                 setData(chart,out,size);
-//                Log.v("Running","run");
 
             }
         };
-
         thread1 = new Thread(new Runnable() {
 
             @Override
             public void run() {
-
                 while (buffered) {
                     runOnUiThread(runnable1);
                     buffered = false;
                     Log.v("Runnables", "FeedMultiple1 Done");
-//                    try {
-//
-//                        Thread.sleep(1);
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
                 }
             }
 
         });
-
         thread1.start();
-
-
     }
 
     private void feedMultiple2() {
@@ -318,11 +279,9 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
             @Override
             public void run() {
+
                 Log.v("Runnables", "FeedMultiple2 Starting");
-
-
                 out = new float[size];
-
                 for (int s = 0; s < size; s++) {
                     complexArray[s] = new Complex((double) in[s], 0);
                 }
@@ -333,7 +292,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                     out[z] = (float) fftOut[z].phase();
                 }
                 setData(chart,out,size);
-//                Log.v("Running","run");
 
             }
         };
@@ -347,12 +305,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                     runOnUiThread(runnable2);
                     buffered = false;
                     Log.v("Runnables", "FeedMultiple2 Done");
-
-//                    try {
-//                        Thread.sleep(1);
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
                 }
             }
 
@@ -360,60 +312,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
         thread2.start();
     }
-
-    private void poincarePlotThread() {
-        if (poincareThread != null)
-            poincareThread.interrupt();
-        final Runnable poincareRunnable = new Runnable() {
-
-            @Override
-            public void run() {
-                Log.v("Runnables", "Poincare Starting");
-
-                //                poincareValue=highpass.next(lowpass.next(value));
-
-                poincareValue = pan.next(value, (long) time);
-                Log.v("pantom", "Time:  " + String.valueOf(time) + "  Value:  " + String.valueOf(poincareValue));
-
-                stats.next(poincareValue);
-                minrp = stats.min;
-                maxrp = stats.max;
-                rangerp = stats.range;
-                if (poincareValue > 70f) {
-                    Log.v("sewdevice", "Peak finder:  Value= " + poincareValue);
-                    peakp = maxrp;
-
-                } else {
-                    peakp = 0f;
-                }
-                Log.v("sewdevice", "Max:  " + maxrp + "");
-                Log.v("sewdevice", "Min:  " + minrp + "");
-                Log.v("sewdevice", "Range:  " + rangerp + "");
-                setPoincareData(chart,poincareValue, peakp,visibility_range,c);
-
-
-            }
-        };
-
-        poincareThread = new Thread(new Runnable() {
-
-            @Override
-            public void run() {
-                while (buffered) {
-                    runOnUiThread(poincareRunnable);
-                    buffered = false;
-                    Log.v("Runnables", "Poincare Done");
-                }
-            }
-
-        });
-
-        poincareThread.start();
-
-
-    }
-
-
 
     private void runDataStreamThread() {
 
@@ -443,9 +341,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                                         streamtofeed = true;
                                         onSensorc();
 //                                        Log.v("sewdevice", "Value:  " + String.valueOf(value) + "--" + String.valueOf(z));
-                                        Log.v("sewdevice",  String.valueOf(value));
-
-
+//                                        Log.v("sewdevice",  String.valueOf(value));
                                     }
                                 }
                             }
@@ -503,12 +399,9 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                     break;
                 case 3:
                     buffered = true;
-//                    poincarePlotThread();
                     poincareValue = pan.next(value, (long) time);
-                    Log.v("pantom", "Time:  " + String.valueOf(time) + "  Value:  " + String.valueOf(poincareValue));
-
                     peakDetector(poincareValue,250,c);
-
+                    c++;
                     break;
                 default:
                     buffered = true;
@@ -520,11 +413,10 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
     }
 
-
-    public void peakDetector(float in, float delta, int count){
+    public void peakDetector(float in, float delta,int count){
         if (count==0){
-            max=MINUS_INFINITE;
-            min=PLUS_INFINITE;
+            max=-100000;
+            min=100000;
             lookfor=true;
             c=0;
         }
@@ -532,11 +424,11 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         if (in<min){min=in;}
         if(lookfor){
             if (in<max-delta){
-                setPoincareData(chart,poincareValue,0,visibility_range,c);
+                setPoincareData(chart,poincareValue,0,visibility_range);
                 min=in;
                 lookfor=false;
             }else{
-                setPoincareData(chart,poincareValue,0,visibility_range,c);
+                setPoincareData(chart,poincareValue,0,visibility_range);
             }
 
 
@@ -545,15 +437,14 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                 max=in;
                 lookfor=true;
                 toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 200);
-                setPoincareData(chart,poincareValue,in,visibility_range,c);
+                setPoincareData(chart,poincareValue,in,visibility_range);
 
 
             }else{
-                setPoincareData(chart,poincareValue,0,visibility_range,c);
+                setPoincareData(chart,poincareValue,0,visibility_range);
             }
         }
     }
-
 
     //    Activity Lifecycle
     @Override

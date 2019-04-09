@@ -6,8 +6,8 @@ public final class bluheartConstants{
         // No need to create Constants objects
     }
 
-    public static final float PLUS_INFINITE=1000000000;
-    public static final float MINUS_INFINITE=-1000000000;
+    public static float PLUS_INFINITE=1000000;
+    public static float MINUS_INFINITE=-1000000;
 
     public static final int SEW_SAMPLING_RATE=250;
 
