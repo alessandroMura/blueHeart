@@ -1,12 +1,33 @@
 package com.example.blueheart;
 
+import android.content.Context;
 import android.util.Log;
+
+import java.util.List;
 
 import sew.CommunicationException;
 import sew.DeviceException;
+import sew.DeviceFinder;
 import sew.SewBluetoothDevice;
 
+import static com.example.blueheart.deviceListActivity.sewDevice;
+import static com.example.blueheart.utilities.showToast;
+
 public class sensorUtilities {
+
+    public static  void setupSensor(Context context) {
+        List<SewBluetoothDevice> bluetoothDeviceList = DeviceFinder.findPairedDevices("sew");
+        for (int i = 0; i < bluetoothDeviceList.size(); i++) {
+            if (bluetoothDeviceList.get(i).getName().equals(deviceListActivity.currentID)) {
+                sewDevice = bluetoothDeviceList.get(i);
+                Log.v("sewdevice", "created");
+                Log.v("sewdevice", sewDevice.getAddress());
+            } else {
+                showToast(context,"Selected!= found");
+            }
+        }
+
+    }
 
     public static void tryConnect(SewBluetoothDevice s) {
         try {
