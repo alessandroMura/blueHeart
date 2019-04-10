@@ -1,6 +1,7 @@
 package com.example.blueheart;
 
 
+import android.graphics.Color;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.os.Bundle;
@@ -12,7 +13,9 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
+import com.github.mikephil.charting.charts.CombinedChart;
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.data.CombinedData;
 import com.karlotoy.perfectune.instance.PerfectTune;
 
 import sew.RegularDataBlock;
@@ -29,7 +32,9 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 //    Graphic elements Initialization ..............................................................
     Fragment timeDomainFrag, freqMagFrag, freqPhasFrag, poincarFrag, lagPoincarFrag,RPeaksFrag;
     Spinner spinner;
-    private LineChart chart;
+//    private LineChart chart;
+    private CombinedChart chart;
+    private CombinedData cData;
 //    Options ......................................................................................
     private int visibility_range = 1024; //Numero campioni visualizzati nel grafico temporale all'inizializzazione
     private static int size = 512; //Numero campioni per la FFT all'inizializzazione
@@ -98,6 +103,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         setContentView(R.layout.activity_real_time_analysis);
         spinner = findViewById(R.id.spinner_mode);
         chart=findViewById(R.id.chart);
+        cData = new CombinedData();
 
         timeDomainFrag = new timeDomainFragment();
         freqMagFrag = new frequencyMagnitudeFragment();
@@ -143,7 +149,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                         break;
                     case 4:
                         whatFragment = 4;
-
+                        c=0;
                         setFragment(poincarFrag,getSupportFragmentManager(),R.id.fragment_frame);
                         break;
                     case 5:
@@ -172,9 +178,11 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
             public void run() {
                 Log.v("Runnables", "setupRunnable Started");
 
-                setupChart(chart,R.id.chart);
+//                setupChart(chart);
+                setupCombinedChart(chart,cData);
                 setupSensor(getApplicationContext());
                 runDataStreamThread();
+
 
             }
         };
@@ -219,7 +227,8 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 //                float tempVar;
 //                tempVar = Filter.lowPassNext(value) ;
 //                value0 = Filter.highPassNext(tempVar) ;
-                setData0(chart,value0,visibility_range);
+
+//                setData0(chart,value0,visibility_range);
             }
         };
 
@@ -260,7 +269,8 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                 for (int z = 0; z < size / 2; z++) {
                     out[z] = (float) fftOut[z].abs();
                 }
-                setData(chart,out,size);
+//                setData(chart,out,size);
+                AddMultipleLineEntries(chart,out,size);
 
             }
         };
@@ -300,7 +310,8 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                 for (int z = 0; z < size / 2; z++) {
                     out[z] = (float) fftOut[z].phase();
                 }
-                setData(chart,out,size);
+//                setData(chart,out,size);
+                AddMultipleLineEntries(chart,out,size);
 
             }
         };
@@ -386,7 +397,9 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                     buffered = true;
                     value0=pan.highpass.next(pan.lowpass.next(value));
 //                  value0=pan.next(value,(long) time);
-                    setData0(chart,value0,visibility_range);
+                    AddLineEntry(chart,value0,visibility_range);
+
+
                     break;
                 case 1:
                     if (c==0){
@@ -417,14 +430,21 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                     }
                     break;
                 case 4:
+                    if (c==0){
+                        startPeaks=System.nanoTime();
+                        timepeakdetector=0;
+                    }
                     buffered = true;
-                    poincareValue = pan.next(value, (long) time);
-                    peakDetector(poincareValue,250,c);
+                    value0=pan.highpass.next(pan.lowpass.next(value));
+                    peakDetector2(value0,200,c);
+
+//                  value0=pan.next(value,(long) time);
+//                    setData0(chart,value0,visibility_range);
                     c++;
                     break;
                 default:
                     buffered = true;
-                    feedMultiple0();
+//                    feedMultiple0();
                     break;
             }
         }
@@ -455,11 +475,13 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         if (in<min){min=in;}
         if(lookfor){
             if (in<max-delta){
-                setPoincareData(chart,poincareValue,0,visibility_range);
+//                setPoincareData(chart,poincareValue,0,visibility_range);
+                Add2LineEntry(chart,poincareValue,0,visibility_range);
                 min=in;
                 lookfor=false;
             }else{
-                setPoincareData(chart,poincareValue,0,visibility_range);
+//                setPoincareData(chart,poincareValue,0,visibility_range);
+                Add2LineEntry(chart,poincareValue,0,visibility_range);
             }
 
 
@@ -477,11 +499,66 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                 max=in;
                 lookfor=true;
                 toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 200);
-                setPoincareData(chart,poincareValue,in,visibility_range);
+//                setPoincareData(chart,poincareValue,in,visibility_range);
+                Add2LineEntry(chart,poincareValue,in,visibility_range);
 
 
             }else{
-                setPoincareData(chart,poincareValue,0,visibility_range);
+//                setPoincareData(chart,poincareValue,0,visibility_range);
+                Add2LineEntry(chart,poincareValue,0,visibility_range);
+            }
+        }
+    }
+
+    public void peakDetector2(float in, float delta,int count){
+        if (count==0){
+            max=-100000;
+            min=100000;
+            lookfor=true;
+            c=0;
+            timepeakdetector=0;
+            countp=0;
+            peaktimevector=new double[500];
+
+
+//            for (int i=0;i<peaktimevector.length;i++) {
+//                Log.v("Timing", "Peak Time Vector" + "------------" + String.valueOf(peaktimevector[i]));
+//            }
+
+        }
+        timepeakdetector=(System.nanoTime() - startPeaks) / 1_000_000_000.0;
+        Log.v("Timing","Current peak detector time"+String.valueOf(timepeakdetector));
+        if (in>max){max=in;}
+        if (in<min){min=in;}
+        if(lookfor){
+            if (in<max-delta){
+//                setPoincareData(chart,value0,0,visibility_range);
+                min=in;
+                lookfor=false;
+            }else{
+//                setPoincareData(chart,value0,0,visibility_range);
+            }
+
+
+        }else{
+            if (in>min+delta && in<600){
+                rpeaktime=timepeakdetector;
+                Log.v("Timing","Current peak time"+"------------"+String.valueOf(timepeakdetector));
+                peaktimevector[countp]=rpeaktime;
+
+                if(countp>2){
+                    double diff=peaktimevector[countp]-peaktimevector[countp-1];
+                    Log.v("Timing","Diff between current r and previous  "+String.valueOf(diff));
+                }
+                countp++;
+                max=in;
+                lookfor=true;
+                toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 200);
+//                setPoincareData(chart,value0,in,visibility_range);
+
+
+            }else{
+//                setPoincareData(chart,value0,0,visibility_range);
             }
         }
     }
