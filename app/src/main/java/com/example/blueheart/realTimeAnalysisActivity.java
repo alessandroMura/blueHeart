@@ -29,13 +29,13 @@ import static com.example.blueheart.graphUtilities.*;
 
 public class realTimeAnalysisActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener, parameterSend {
 
-//    Graphic elements Initialization ..............................................................
+    //    Graphic elements Initialization ..............................................................
     Fragment timeDomainFrag, freqMagFrag, freqPhasFrag, poincarFrag, lagPoincarFrag,RPeaksFrag;
     Spinner spinner;
-//    private LineChart chart;
+    //    private LineChart chart;
     private CombinedChart chart;
     private CombinedData cData;
-//    Options ......................................................................................
+    //    Options ......................................................................................
     private int visibility_range = 1024; //Numero campioni visualizzati nel grafico temporale all'inizializzazione
     private static int size = 512; //Numero campioni per la FFT all'inizializzazione
     private Complex complexArray[] = new Complex[size]; //Array di complessi per la fft in ingresso
@@ -46,7 +46,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     private float poincareValue = 0;
     private float value0 = 0;
 
-//    Boolean Variables ........................................................................
+    //    Boolean Variables ........................................................................
     private static boolean buffered = true;
     private boolean canStream = true;
     private boolean streamtofeed;
@@ -54,7 +54,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     private int i = 0;
 
 
-//    Parametri, oggetti e variabili per il filtraggio ..........................................
+    //    Parametri, oggetti e variabili per il filtraggio ..........................................
     private float minrp = -100f;
     private float maxrp = 100f;
     private float rangerp = 200f;
@@ -70,7 +70,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     private boolean lookfor=true;
     private int c=0;
 
-//Filtri non più utilizzati .....................................................................
+    //Filtri non più utilizzati .....................................................................
     private HeartyFilter.SavGolayFilter savgol = new HeartyFilter.SavGolayFilter(1);
     private HeartyFilter.StatFilter stats = new HeartyFilter.StatFilter();
     private LmeFilter lp = new LmeFilter(LP2_B, LP2_A);
@@ -79,13 +79,13 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     private LmeFilter.WndIntFilter meanw = new LmeFilter.WndIntFilter(5);
 //    ...........................................................................................
 
-//    Inizializzazione oggetti per il Pan Tompkins ..............................................
+    //    Inizializzazione oggetti per il Pan Tompkins ..............................................
     private PanTompkins pan = new PanTompkins(SEW_SAMPLING_RATE);
     private PerfectTune perfectTune = new PerfectTune();
     private ToneGenerator toneG;
 //    ...........................................................................................
 
-//    Inizializzazione oggetti thread ............................................................
+    //    Inizializzazione oggetti thread ............................................................
     private Thread setupThread;
     private Thread thread0;
     private Thread thread1;
@@ -435,7 +435,8 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                         timepeakdetector=0;
                     }
                     buffered = true;
-                    value0=pan.highpass.next(pan.lowpass.next(value));
+//                    value0=pan.highpass.next(pan.lowpass.next(value));
+                    value0=pan.next(value, (long) time);
                     peakDetector2(value0,200,c);
 
 //                  value0=pan.next(value,(long) time);
@@ -555,6 +556,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                 lookfor=true;
                 toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 200);
 //                setPoincareData(chart,value0,in,visibility_range);
+                AddLineEntryScatter(chart,max);
 
 
             }else{

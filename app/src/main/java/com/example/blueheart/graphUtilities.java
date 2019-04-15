@@ -15,6 +15,7 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.data.ScatterData;
 import com.github.mikephil.charting.data.ScatterDataSet;
+import com.github.mikephil.charting.interfaces.datasets.IBarLineScatterCandleBubbleDataSet;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 
 import java.util.ArrayList;
@@ -26,7 +27,7 @@ public class graphUtilities {
     private static LineChart mLineChart;
 
     public static void removeDataSet() {
-        
+
         LineData data = mLineChart.getData();
 
         if (data != null) {
@@ -210,6 +211,68 @@ public class graphUtilities {
         }
     }
 
+    public static void AddLineEntryScatter(CombinedChart mychart,float Value){
+
+        // create a dataset and give it a type
+        LineDataSet set1 = createSetscat();
+        CombinedData data=mychart.getData();
+        if (data != null) {
+            LineData lineData = data.getLineData();
+            if (lineData != null) {
+                ILineDataSet set = lineData.getDataSetByIndex(0);
+                ILineDataSet set2=lineData.getDataSetByIndex(1);
+                if (set2!=null){
+                    set2.clear();
+
+                }
+                if (set.getLabel()!="scat") {
+                    set.clear();
+                    if (set == null) {
+                        lineData.addDataSet(set1);
+                    }
+                    lineData.removeDataSet(0);
+                    lineData.addDataSet(set1);
+                    mychart.notifyDataSetChanged();
+                    mychart.invalidate();
+                }
+            }
+            ILineDataSet set = lineData.getDataSetByIndex(0);
+            if (set.getLabel()=="scat") {
+                lineData.addEntry(new Entry(data.getEntryCount(), Value), 0);
+
+
+                data.notifyDataChanged();
+                mychart.notifyDataSetChanged();
+
+                // create a data object with the data sets
+
+//        LineData data= cdata.getLineData();
+//        data.removeDataSet(0);
+//        data.removeDataSet(1);
+//
+//        data.addDataSet(set1);
+//        data.notifyDataChanged();
+
+
+                YAxis leftAxis = mychart.getAxisLeft();
+                leftAxis.setAxisMaximum(500f);
+                leftAxis.setAxisMinimum(-100f);
+
+                mychart.setVisibleXRangeMaximum(100);
+                mychart.moveViewToX(data.getEntryCount());
+                mychart.fitScreen();
+//        chart.notifyDataSetChanged();
+
+                // let the chart know it's data has changed
+//        chart.invalidate();
+                // get the legend (only possible after setting data)
+                Legend l = mychart.getLegend();
+                l.setEnabled(false);
+            }
+        }
+
+    }
+
 
     public static void Add2LineEntry(CombinedChart mychart,float Value,float Value2,int visibility){
         CombinedData data = mychart.getData();
@@ -272,6 +335,19 @@ public class graphUtilities {
         set.setLineWidth(0.5f);
         set.setDrawValues(false);
         set.setDrawCircles(false);
+        set.setMode(LineDataSet.Mode.LINEAR);
+        set.setDrawFilled(false);
+        return set;
+    }
+
+    public static LineDataSet createSetscat() {
+
+        LineDataSet set = new LineDataSet(null, "scat");
+        set.setColor(Color.TRANSPARENT);
+        set.setLineWidth(0.5f);
+        set.setDrawValues(false);
+        set.setDrawCircles(true);
+        set.setCircleColor(Color.CYAN);
         set.setMode(LineDataSet.Mode.LINEAR);
         set.setDrawFilled(false);
         return set;
