@@ -15,8 +15,12 @@ import android.widget.Spinner;
 
 import com.github.mikephil.charting.charts.CombinedChart;
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.charts.ScatterChart;
 import com.github.mikephil.charting.data.CombinedData;
+import com.github.mikephil.charting.data.Entry;
 import com.karlotoy.perfectune.instance.PerfectTune;
+
+import java.util.ArrayList;
 
 import sew.RegularDataBlock;
 
@@ -33,8 +37,9 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     Fragment timeDomainFrag, freqMagFrag, freqPhasFrag, poincarFrag, lagPoincarFrag,RPeaksFrag;
     Spinner spinner;
     //    private LineChart chart;
-    private CombinedChart chart;
-    private CombinedData cData;
+    private LineChart chart;
+    private ScatterChart scatterchart;
+
     //    Options ......................................................................................
     private int visibility_range = 1024; //Numero campioni visualizzati nel grafico temporale all'inizializzazione
     private static int size = 512; //Numero campioni per la FFT all'inizializzazione
@@ -64,11 +69,13 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     private double timepeakdetector;
     private double rpeaktime;
     private double peaktimevector[]=new double[500];
+    private float diffvector[]=new float[500];
     private double time;
     private float max=-100000;
     private float min=100000;
     private boolean lookfor=true;
     private int c=0;
+    private int diff_indx=0;
 
     //Filtri non più utilizzati .....................................................................
     private HeartyFilter.SavGolayFilter savgol = new HeartyFilter.SavGolayFilter(1);
@@ -102,8 +109,9 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
         setContentView(R.layout.activity_real_time_analysis);
         spinner = findViewById(R.id.spinner_mode);
+        scatterchart=findViewById(R.id.chart2);
         chart=findViewById(R.id.chart);
-        cData = new CombinedData();
+        scatterchart.setVisibility(View.GONE);
 
         timeDomainFrag = new timeDomainFragment();
         freqMagFrag = new frequencyMagnitudeFragment();
@@ -122,8 +130,8 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
         toneG = new ToneGenerator(AudioManager.STREAM_ALARM, 50);
 
-
         setup();
+
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view,
@@ -149,6 +157,9 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                         break;
                     case 4:
                         whatFragment = 4;
+                        chart.setVisibility(View.GONE);
+                        scatterchart.setVisibility(View.VISIBLE);
+                        setupScatterChart(scatterchart);
                         c=0;
                         setFragment(poincarFrag,getSupportFragmentManager(),R.id.fragment_frame);
                         break;
@@ -179,7 +190,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                 Log.v("Runnables", "setupRunnable Started");
 
 //                setupChart(chart);
-                setupCombinedChart(chart,cData);
+                setupChart(chart);
                 setupSensor(getApplicationContext());
                 runDataStreamThread();
 
@@ -269,8 +280,8 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                 for (int z = 0; z < size / 2; z++) {
                     out[z] = (float) fftOut[z].abs();
                 }
-//                setData(chart,out,size);
-                AddMultipleLineEntries(chart,out,size);
+                setData(chart,out,size);
+
 
             }
         };
@@ -310,8 +321,8 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                 for (int z = 0; z < size / 2; z++) {
                     out[z] = (float) fftOut[z].phase();
                 }
-//                setData(chart,out,size);
-                AddMultipleLineEntries(chart,out,size);
+                setData(chart,out,size);
+
 
             }
         };
@@ -357,7 +368,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                                     for (int z = 0; z < signal.length; z++) {
 
                                         time = (System.nanoTime() - start) / 1_000_000_000.0;
-                                        Log.v("Timing",String.valueOf(time));
+//                                        Log.v("Timing",String.valueOf(time));
                                         value = signal[z];
                                         streamtofeed = true;
                                         onSensorc();
@@ -397,7 +408,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                     buffered = true;
                     value0=pan.highpass.next(pan.lowpass.next(value));
 //                  value0=pan.next(value,(long) time);
-                    AddLineEntry(chart,value0,visibility_range);
+                    setData0(chart,value0,visibility_range);
 
 
                     break;
@@ -435,17 +446,19 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                         timepeakdetector=0;
                     }
                     buffered = true;
-//                    value0=pan.highpass.next(pan.lowpass.next(value));
                     value0=pan.next(value, (long) time);
                     peakDetector2(value0,200,c);
-
+//                    setDataScat(chart,value0,visibility_range);
 //                  value0=pan.next(value,(long) time);
-//                    setData0(chart,value0,visibility_range);
+
                     c++;
                     break;
                 default:
                     buffered = true;
 //                    feedMultiple0();
+                    value0=pan.highpass.next(pan.lowpass.next(value));
+//                  value0=pan.next(value,(long) time);
+                    setData0(chart,value0,visibility_range);
                     break;
             }
         }
@@ -476,13 +489,13 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         if (in<min){min=in;}
         if(lookfor){
             if (in<max-delta){
-//                setPoincareData(chart,poincareValue,0,visibility_range);
-                Add2LineEntry(chart,poincareValue,0,visibility_range);
+                setPoincareData(chart,poincareValue,0,visibility_range);
+
                 min=in;
                 lookfor=false;
             }else{
-//                setPoincareData(chart,poincareValue,0,visibility_range);
-                Add2LineEntry(chart,poincareValue,0,visibility_range);
+                setPoincareData(chart,poincareValue,0,visibility_range);
+
             }
 
 
@@ -500,13 +513,13 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                 max=in;
                 lookfor=true;
                 toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 200);
-//                setPoincareData(chart,poincareValue,in,visibility_range);
-                Add2LineEntry(chart,poincareValue,in,visibility_range);
+                setPoincareData(chart,poincareValue,in,visibility_range);
+
 
 
             }else{
-//                setPoincareData(chart,poincareValue,0,visibility_range);
-                Add2LineEntry(chart,poincareValue,0,visibility_range);
+                setPoincareData(chart,poincareValue,0,visibility_range);
+
             }
         }
     }
@@ -519,7 +532,9 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
             c=0;
             timepeakdetector=0;
             countp=0;
+            diff_indx=0;
             peaktimevector=new double[500];
+            diffvector=new float[500];
 
 
 //            for (int i=0;i<peaktimevector.length;i++) {
@@ -528,7 +543,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
         }
         timepeakdetector=(System.nanoTime() - startPeaks) / 1_000_000_000.0;
-        Log.v("Timing","Current peak detector time"+String.valueOf(timepeakdetector));
+//        Log.v("Timing","Current peak detector time"+String.valueOf(timepeakdetector));
         if (in>max){max=in;}
         if (in<min){min=in;}
         if(lookfor){
@@ -549,14 +564,19 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
                 if(countp>2){
                     double diff=peaktimevector[countp]-peaktimevector[countp-1];
+                    diffvector[diff_indx]=(float)diff;
                     Log.v("Timing","Diff between current r and previous  "+String.valueOf(diff));
+                    if (diff_indx>2) {
+                        setDataScat(scatterchart, diffvector[diff_indx - 1], diffvector[diff_indx], visibility_range);
+                    }
+                    diff_indx++;
                 }
                 countp++;
                 max=in;
                 lookfor=true;
                 toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 200);
-//                setPoincareData(chart,value0,in,visibility_range);
-                AddLineEntryScatter(chart,max);
+
+
 
 
             }else{
