@@ -12,10 +12,10 @@
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="300sp">
-        <com.github.mikephil.charting.charts.ScatterChart
-            android:id="@+id/chart2"
+        <com.jjoe64.graphview.GraphView
+            android:id="@+id/scatterchart"
             android:layout_width="match_parent"
-            android:layout_height="300sp"></com.github.mikephil.charting.charts.ScatterChart>
+            android:layout_height="300sp"></com.jjoe64.graphview.GraphView>
         <com.github.mikephil.charting.charts.LineChart
             android:id="@+id/chart"
             android:layout_width="match_parent"

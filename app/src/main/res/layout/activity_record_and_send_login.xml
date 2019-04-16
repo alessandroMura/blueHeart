@@ -13,7 +13,6 @@
         android:layout_height="wrap_content"
         android:text=""
         android:textAlignment="viewStart"
-        android:gravity="center"
         android:hint="Name"
         android:ems="10"
         />
@@ -23,7 +22,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text=""
-        android:gravity="center"
         android:textAlignment="viewStart"
         android:hint="Password"
         android:ems="10"

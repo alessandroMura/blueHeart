@@ -18,6 +18,9 @@ import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.charts.ScatterChart;
 import com.github.mikephil.charting.data.CombinedData;
 import com.github.mikephil.charting.data.Entry;
+import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.series.DataPoint;
+import com.jjoe64.graphview.series.PointsGraphSeries;
 import com.karlotoy.perfectune.instance.PerfectTune;
 
 import java.util.ArrayList;
@@ -38,7 +41,9 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     Spinner spinner;
     //    private LineChart chart;
     private LineChart chart;
-    private ScatterChart scatterchart;
+    private GraphView scatterchart;
+    private ArrayList<XYValue> xyValueArray;
+    private PointsGraphSeries<DataPoint> xySeries;
 
     //    Options ......................................................................................
     private int visibility_range = 1024; //Numero campioni visualizzati nel grafico temporale all'inizializzazione
@@ -69,7 +74,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     private double timepeakdetector;
     private double rpeaktime;
     private double peaktimevector[]=new double[500];
-    private float diffvector[]=new float[500];
+    private double diffvector[]=new double[500];
     private double time;
     private float max=-100000;
     private float min=100000;
@@ -109,7 +114,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
         setContentView(R.layout.activity_real_time_analysis);
         spinner = findViewById(R.id.spinner_mode);
-        scatterchart=findViewById(R.id.chart2);
+        scatterchart=findViewById(R.id.scatterchart);
         chart=findViewById(R.id.chart);
         scatterchart.setVisibility(View.GONE);
 
@@ -129,6 +134,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         spinner.setAdapter(adapter);
 
         toneG = new ToneGenerator(AudioManager.STREAM_ALARM, 50);
+        xyValueArray = new ArrayList<>();
 
         setup();
 
@@ -140,26 +146,36 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                 switch (pos) {
                     case 0:
                         whatFragment = 0;
+                        scatterchart.setVisibility(View.GONE);
+                        chart.setVisibility(View.VISIBLE);
                         setFragment(timeDomainFrag,getSupportFragmentManager(),R.id.fragment_frame);
                         break;
                     case 1:
                         whatFragment = 1;
+                        scatterchart.setVisibility(View.GONE);
+                        chart.setVisibility(View.VISIBLE);
                         c=0;
                         setFragment(RPeaksFrag,getSupportFragmentManager(),R.id.fragment_frame);
                         break;
                     case 2:
                         whatFragment = 2;
+                        scatterchart.setVisibility(View.GONE);
+                        chart.setVisibility(View.VISIBLE);
                         setFragment(freqMagFrag,getSupportFragmentManager(),R.id.fragment_frame);
                         break;
                     case 3:
                         whatFragment = 3;
+                        scatterchart.setVisibility(View.GONE);
+                        chart.setVisibility(View.VISIBLE);
+
+
                         setFragment(freqPhasFrag,getSupportFragmentManager(),R.id.fragment_frame);
                         break;
                     case 4:
                         whatFragment = 4;
                         chart.setVisibility(View.GONE);
                         scatterchart.setVisibility(View.VISIBLE);
-                        setupScatterChart(scatterchart);
+
                         c=0;
                         setFragment(poincarFrag,getSupportFragmentManager(),R.id.fragment_frame);
                         break;
@@ -367,7 +383,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
                                     for (int z = 0; z < signal.length; z++) {
 
-                                        time = (System.nanoTime() - start) / 1_000_000_000.0;
+                                        time = (System.nanoTime() - start) / 1_000_000_000.0000000;
 //                                        Log.v("Timing",String.valueOf(time));
                                         value = signal[z];
                                         streamtofeed = true;
@@ -483,7 +499,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 //            }
 
         }
-        timepeakdetector=(System.nanoTime() - startPeaks) / 1_000_000_000.0;
+        timepeakdetector=(System.nanoTime() - startPeaks) / 1_000_000_000.0000000;
         Log.v("Timing","Current peak detector time"+String.valueOf(timepeakdetector));
         if (in>max){max=in;}
         if (in<min){min=in;}
@@ -534,7 +550,10 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
             countp=0;
             diff_indx=0;
             peaktimevector=new double[500];
-            diffvector=new float[500];
+            diffvector=new double[500];
+            xyValueArray=new ArrayList<>();
+            xySeries = new PointsGraphSeries<>();
+
 
 
 //            for (int i=0;i<peaktimevector.length;i++) {
@@ -542,7 +561,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 //            }
 
         }
-        timepeakdetector=(System.nanoTime() - startPeaks) / 1_000_000_000.0;
+
 //        Log.v("Timing","Current peak detector time"+String.valueOf(timepeakdetector));
         if (in>max){max=in;}
         if (in<min){min=in;}
@@ -558,16 +577,19 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
         }else{
             if (in>min+delta && in<600){
+                timepeakdetector=(System.nanoTime() - startPeaks) / 1_000_000_000.0000000;
                 rpeaktime=timepeakdetector;
                 Log.v("Timing","Current peak time"+"------------"+String.valueOf(timepeakdetector));
                 peaktimevector[countp]=rpeaktime;
 
-                if(countp>2){
+                if(countp>=1){
                     double diff=peaktimevector[countp]-peaktimevector[countp-1];
-                    diffvector[diff_indx]=(float)diff;
+                    diffvector[diff_indx]=diff;
                     Log.v("Timing","Diff between current r and previous  "+String.valueOf(diff));
-                    if (diff_indx>2) {
-                        setDataScat(scatterchart, diffvector[diff_indx - 1], diffvector[diff_indx], visibility_range);
+                    if (diff_indx>=1) {
+//                        setDataScat(scatterchart, diffvector[diff_indx - 1], diffvector[diff_indx], visibility_range);
+                        initscatt(scatterchart,xyValueArray,xySeries,diffvector[diff_indx - 1],diffvector[diff_indx]);
+
                     }
                     diff_indx++;
                 }
