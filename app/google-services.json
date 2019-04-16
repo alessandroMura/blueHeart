@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "959223431262",
+    "firebase_url": "https://bluheart-7b1b9.firebaseio.com",
+    "project_id": "bluheart-7b1b9",
+    "storage_bucket": "bluheart-7b1b9.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:959223431262:android:c2b49bdd52503558",
+        "android_client_info": {
+          "package_name": "com.example.blueheart"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "959223431262-qhjrufh2srnsr6odo2876akgfnb5tj1p.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCQJa8hNd9IuLYLknEokR-r1Bmj8sr5DS8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "959223431262-qhjrufh2srnsr6odo2876akgfnb5tj1p.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

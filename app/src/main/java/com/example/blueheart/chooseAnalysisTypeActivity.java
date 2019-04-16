@@ -32,7 +32,7 @@ public class chooseAnalysisTypeActivity extends AppCompatActivity implements Vie
                 break;
             case R.id.record_and_send:
                 Log.v(MAIN_BUTTON_MESSAGE,"Record and send chosen!");
-                Intent start_record_and_send=new Intent(this,record_and_send_login.class);
+                Intent start_record_and_send=new Intent(this, recordAndSendLogin.class);
                 startActivity(start_record_and_send);
                 break;
             default:
