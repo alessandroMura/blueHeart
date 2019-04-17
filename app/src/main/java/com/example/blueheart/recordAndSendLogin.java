@@ -27,6 +27,7 @@ public class recordAndSendLogin extends AppCompatActivity {
     private TextView registrationActivitylaunch;
     private FirebaseAuth firebaseAuth;
     private ProgressDialog progressDialog;
+    private TextView forgotPass;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +39,7 @@ public class recordAndSendLogin extends AppCompatActivity {
         login=findViewById(R.id.login);
         info=findViewById(R.id.info);
         registrationActivitylaunch=findViewById(R.id.register);
+        forgotPass=findViewById(R.id.forgotpassword);
 
         info.setText("No of attempts remaining: "+counter);
 
@@ -65,6 +67,13 @@ public class recordAndSendLogin extends AppCompatActivity {
             }
         });
 
+
+        forgotPass.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(getApplicationContext(),forgotPassword.class));
+            }
+        });
     }
 
     private void validate(String userName,String userPassword) {

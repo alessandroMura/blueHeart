@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:text=""
         android:textAlignment="viewStart"
-        android:hint="Name"
+        android:hint="Email"
         android:ems="10"
         />
 
@@ -37,11 +37,18 @@
         android:text="Login"
         />
     <TextView
+        android:id="@+id/forgotpassword"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="128dp"
+        android:text="Forgot Password?"
+        />
+    <TextView
         android:id="@+id/info"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="No of attempts remaining: "
-        android:layout_marginTop="128sp"
+        android:layout_marginTop="28sp"
         />
     <TextView
         android:id="@+id/register"
