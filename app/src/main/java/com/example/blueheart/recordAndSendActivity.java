@@ -1,5 +1,6 @@
 package com.example.blueheart;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
@@ -15,10 +16,14 @@ import android.widget.TextView;
 import com.github.mikephil.charting.charts.LineChart;
 import com.google.firebase.auth.FirebaseAuth;
 
+import java.text.DecimalFormat;
+import java.util.Arrays;
+
 import sew.RegularDataBlock;
 
 import static com.example.blueheart.bluheartConstants.SEW_SAMPLING_RATE;
 import static com.example.blueheart.deviceListActivity.sewDevice;
+import static com.example.blueheart.graphUtilities.initscatt;
 import static com.example.blueheart.graphUtilities.setData0;
 import static com.example.blueheart.graphUtilities.setPoincareData;
 import static com.example.blueheart.graphUtilities.setupChart;
@@ -59,6 +64,10 @@ public class recordAndSendActivity extends AppCompatActivity {
     private boolean lookfor=true;
     private int diff_indx=0;
     private int visibility_range = 1024;
+    DecimalFormat numberFormat = new DecimalFormat("#00.00000");
+
+    private double sd1,sd2,S;
+
 
 
 
@@ -210,6 +219,8 @@ public class recordAndSendActivity extends AppCompatActivity {
             timepeakdetector=0;
             countp=0;
             peaktimevector=new double[500];
+            diff_indx=0;
+            diffvector=new double[500];
 
 
 //            for (int i=0;i<peaktimevector.length;i++) {
@@ -217,8 +228,8 @@ public class recordAndSendActivity extends AppCompatActivity {
 //            }
 
         }
-        timepeakdetector=(System.nanoTime() - startPeaks) / 1_000_000_000.0000000;
-        Log.v("Timing","Current peak detector time"+String.valueOf(timepeakdetector));
+//        timepeakdetector=(System.nanoTime() - startPeaks) / 1_000_000_000.0000000;
+        Log.v("Time","Current peak detector time"+String.valueOf(timepeakdetector));
         if (in>max){max=in;}
         if (in<min){min=in;}
         if(lookfor){
@@ -235,13 +246,37 @@ public class recordAndSendActivity extends AppCompatActivity {
 
         }else{
             if (in>min+delta && in<600){
+                timepeakdetector=(System.nanoTime() - startPeaks) / 1_000_000_000.0000000;
                 rpeaktime=timepeakdetector;
-                Log.v("Timing","Current peak time"+"------------"+String.valueOf(timepeakdetector));
+//                Log.v("Timing","Current peak time"+"------------"+String.valueOf(timepeakdetector));
                 peaktimevector[countp]=rpeaktime;
 
-                if(countp>2){
+                if(countp>=1){
                     double diff=peaktimevector[countp]-peaktimevector[countp-1];
-                    Log.v("Timing","Diff between current r and previous  "+String.valueOf(diff));
+
+                    if (diff>=0.6 && diff<=1.4000){
+                        diffvector[diff_indx]=diff;
+                        Log.v("t0","Diff between current r and previous  "+String.valueOf(diff));
+                        if (diff_indx>=1) {
+
+                            sd1=SD1(diffvector);
+                            sd2=SD2(diffvector);
+                            S=SArea(sd1,sd2);
+                            Log.v("t1","Diff between current r and previous  "+String.valueOf(sd1));
+                            Log.v("t2","Diff between current r and previous  "+String.valueOf(sd2));
+                            Log.v("t3","Diff between current r and previous  "+String.valueOf(S));
+
+                            runOnUiThread(new Runnable() {
+                                public void run() {
+                                    currentrr.setText(numberFormat.format(diffvector[diff_indx-1]));
+                                    currentsd1.setText(numberFormat.format(sd1));
+                                    currentsd2.setText(numberFormat.format(sd2));
+                                    currents.setText(numberFormat.format(S));
+                                }
+                            });
+                        }
+                        diff_indx++;
+                    }
                 }
                 countp++;
                 max=in;
@@ -258,6 +293,34 @@ public class recordAndSendActivity extends AppCompatActivity {
         }
     }
 
+
+    public double SD1(double [] in){
+
+        double []xp= Arrays.copyOfRange(in, 0, in.length);
+        double []xm= Arrays.copyOfRange(in, 1, in.length+1);
+        double [] df=new double[xm.length];
+        for (int ix=0;ix<xm.length;ix++){
+            df[ix]=xp[ix]-xm[ix];
+        }
+        double sd1=new Statistics(df).getStdDev()/Math.sqrt(2);
+        return sd1;
+    }
+
+    public double SD2(double [] in){
+
+        double []xp= Arrays.copyOfRange(in, 0, in.length);
+        double []xm= Arrays.copyOfRange(in, 1, in.length+1);
+        double [] df=new double[xm.length];
+        for (int ix=0;ix<xm.length;ix++){
+            df[ix]=xp[ix]+xm[ix];
+        }
+        double sd1=new Statistics(df).getStdDev()/Math.sqrt(2);
+        return sd1;
+    }
+
+    public double SArea(double sd1,double sd2){
+        return Math.PI*sd1*sd2;
+    }
 
     @Override
     protected void onDestroy() {

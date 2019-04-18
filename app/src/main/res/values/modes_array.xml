@@ -5,7 +5,6 @@
         <item>-R-Peaks Detection</item>
         <item>-Frequency Domain (Magnitude)</item>
         <item>-Frequency Domain (Phase)</item>
-        <item>-Poincare Plot RR(n)-RR(n+1)</item>
-        <item>-Lagged Poincare Plot n:(1-10)</item>
+        <item>-Lagged Poincare Plot RR(n)-RR(n+M)</item>
     </string-array>
 </resources>

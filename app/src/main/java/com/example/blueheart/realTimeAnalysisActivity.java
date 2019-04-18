@@ -12,6 +12,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import com.github.mikephil.charting.charts.CombinedChart;
 import com.github.mikephil.charting.charts.LineChart;
@@ -24,6 +25,7 @@ import com.jjoe64.graphview.series.PointsGraphSeries;
 import com.karlotoy.perfectune.instance.PerfectTune;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import sew.RegularDataBlock;
 
@@ -37,7 +39,7 @@ import static com.example.blueheart.graphUtilities.*;
 public class realTimeAnalysisActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener, parameterSend {
 
     //    Graphic elements Initialization ..............................................................
-    Fragment timeDomainFrag, freqMagFrag, freqPhasFrag, poincarFrag, lagPoincarFrag,RPeaksFrag;
+    Fragment timeDomainFrag, freqMagFrag, freqPhasFrag, poincarFrag,RPeaksFrag;
     Spinner spinner;
     //    private LineChart chart;
     private LineChart chart;
@@ -75,6 +77,10 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     private double rpeaktime;
     private double peaktimevector[]=new double[500];
     private double diffvector[]=new double[500];
+    private double diff;
+    private double sd1;
+    private double sd2;
+    private double S;
     private double time;
     private float max=-100000;
     private float min=100000;
@@ -122,7 +128,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         freqMagFrag = new frequencyMagnitudeFragment();
         freqPhasFrag = new frequencyPhaseFragment();
         poincarFrag = new poincarePlotFragment();
-        lagPoincarFrag = new laggedPoincareFragment();
         RPeaksFrag=new RPeaksFragment();
 
         // Create an ArrayAdapter using the string array and a default spinner layout
@@ -148,6 +153,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                         whatFragment = 0;
                         scatterchart.setVisibility(View.GONE);
                         chart.setVisibility(View.VISIBLE);
+                        c=0;
                         setFragment(timeDomainFrag,getSupportFragmentManager(),R.id.fragment_frame);
                         break;
                     case 1:
@@ -161,27 +167,22 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                         whatFragment = 2;
                         scatterchart.setVisibility(View.GONE);
                         chart.setVisibility(View.VISIBLE);
+                        c=0;
                         setFragment(freqMagFrag,getSupportFragmentManager(),R.id.fragment_frame);
                         break;
                     case 3:
                         whatFragment = 3;
                         scatterchart.setVisibility(View.GONE);
                         chart.setVisibility(View.VISIBLE);
-
-
+                        c=0;
                         setFragment(freqPhasFrag,getSupportFragmentManager(),R.id.fragment_frame);
                         break;
                     case 4:
                         whatFragment = 4;
                         chart.setVisibility(View.GONE);
                         scatterchart.setVisibility(View.VISIBLE);
-
                         c=0;
                         setFragment(poincarFrag,getSupportFragmentManager(),R.id.fragment_frame);
-                        break;
-                    case 5:
-                        whatFragment = 5;
-                        setFragment(lagPoincarFrag,getSupportFragmentManager(),R.id.fragment_frame);
                         break;
                 }
             }
@@ -423,6 +424,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                 case 0:
                     buffered = true;
                     value0=pan.highpass.next(pan.lowpass.next(value));
+                    Log.v("valuexxx: ",  String.valueOf(value0));
 //                  value0=pan.next(value,(long) time);
                     setData0(chart,value0,visibility_range);
 
@@ -492,6 +494,8 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
             timepeakdetector=0;
             countp=0;
             peaktimevector=new double[500];
+            diff=0;
+            scatterchart.removeAllSeries();
 
 
 //            for (int i=0;i<peaktimevector.length;i++) {
@@ -553,6 +557,9 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
             diffvector=new double[500];
             xyValueArray=new ArrayList<>();
             xySeries = new PointsGraphSeries<>();
+            diff=0;
+            sd1=0;
+            scatterchart.removeAllSeries();
 
 
 
@@ -582,16 +589,27 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                 Log.v("Timing","Current peak time"+"------------"+String.valueOf(timepeakdetector));
                 peaktimevector[countp]=rpeaktime;
 
-                if(countp>=1){
-                    double diff=peaktimevector[countp]-peaktimevector[countp-1];
-                    diffvector[diff_indx]=diff;
-                    Log.v("Timing","Diff between current r and previous  "+String.valueOf(diff));
-                    if (diff_indx>=1) {
-//                        setDataScat(scatterchart, diffvector[diff_indx - 1], diffvector[diff_indx], visibility_range);
-                        initscatt(scatterchart,xyValueArray,xySeries,diffvector[diff_indx - 1],diffvector[diff_indx]);
+                if(countp>=1) {
+                     diff = peaktimevector[countp] - peaktimevector[countp - 1];
+                    if (diff >= 0.6 && diff <= 1.4000) {
+                        diffvector[diff_indx] = diff;
+                        Log.v("Timing", "Diff between current r and previous  " + String.valueOf(diff));
+                        if (diff_indx >= 1) {
+                            initscatt(scatterchart,xyValueArray,xySeries,diffvector[diff_indx - 1],diffvector[diff_indx]);
 
+                            sd1=SD1(diffvector);
+                            sd2=SD2(diffvector);
+                            S=SArea(sd1,sd2);
+
+
+                            runOnUiThread(new Runnable() {
+                                public void run() {
+                                    changeFragmentTextView(String.valueOf(sd1),String.valueOf(sd2),String.valueOf(S));
+                                }
+                            });
+                        }
+                        diff_indx++;
                     }
-                    diff_indx++;
                 }
                 countp++;
                 max=in;
@@ -607,12 +625,52 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         }
     }
 
+
+    public void changeFragmentTextView(String s1,String s2,String s) {
+//        android.app.Fragment frag = getFragmentManager().findFragmentById(R.id.fragment_frame);
+//        ((TextView) poincarFrag.getView().findViewById(R.id.pSD1)).setText(s);
+       poincarePlotFragment frag=(poincarePlotFragment)poincarFrag.getFragmentManager().findFragmentById(R.id.fragment_frame);
+       frag.changeFragmentTextView(s1,s2,s);
+
+    }
+
+
+    public double SD1(double [] in){
+
+        double []xp= Arrays.copyOfRange(in, 0, in.length);
+        double []xm= Arrays.copyOfRange(in, 1, in.length+1);
+        double [] df=new double[xm.length];
+        for (int ix=0;ix<xm.length;ix++){
+            df[ix]=xp[ix]-xm[ix];
+        }
+        double sd1=new Statistics(df).getStdDev()/Math.sqrt(2);
+        return sd1;
+    }
+
+    public double SD2(double [] in){
+
+        double []xp= Arrays.copyOfRange(in, 0, in.length);
+        double []xm= Arrays.copyOfRange(in, 1, in.length+1);
+        double [] df=new double[xm.length];
+        for (int ix=0;ix<xm.length;ix++){
+            df[ix]=xp[ix]+xm[ix];
+        }
+        double sd1=new Statistics(df).getStdDev()/Math.sqrt(2);
+        return sd1;
+    }
+
+    public double SArea(double sd1,double sd2){
+        return Math.PI*sd1*sd2;
+    }
+
+
     //    Activity Lifecycle
     @Override
     protected void onDestroy() {
         Log.v("Actlif", "onDestroy Called");
         super.onDestroy();
 //        removeDataSet();
+        c=0;
 
         if (thread0 != null) {
             thread3.interrupt();
@@ -664,6 +722,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     protected void onStop() {
         Log.v("Actlif", "onStop Called");
         super.onStop();
+        c=0;
 
     }
 
@@ -671,8 +730,8 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     protected void onPause() {
         Log.v("Actlif", "onPause Called");
         super.onPause();
+
         c=0;
-        timepeakdetector=0;
     }
 
     //    Interfaces Overrides

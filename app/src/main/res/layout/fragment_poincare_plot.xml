@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".poincarePlotFragment"
+    android:tag="poicare"
 
     >
 
@@ -17,13 +18,6 @@
 
         >
 
-        <TextView
-            android:id="@+id/poica"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:text="@string/poincare_frag_name"
-            android:gravity="center"
-            />
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -34,7 +28,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Size "
+                android:text="M (Lag Value)"
                 android:gravity="left"
                 />
             <Button
@@ -48,7 +42,7 @@
                 android:id="@+id/size_fft"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:hint="Size"
+                android:hint="Value"
 
                 />
 
@@ -63,41 +57,78 @@
                 />
 
         </LinearLayout>
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="VISUALIZE"
-            android:textStyle="bold"
-            android:layout_gravity="center"
-            android:paddingTop="32dp"
-            />
+
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:layout_marginLeft="42dp"
+
             >
-            <RadioButton
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="SD1"
-                android:padding="16dp"
-                />
-            <RadioButton
+                android:orientation="horizontal"
+                >
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="SD1: "
+                    android:padding="16dp"
+                    />
+                <TextView
+                    android:id="@+id/pSD1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text=""
+                    android:padding="16dp"
+                    />
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="SD2"
-                android:padding="16dp"
-                />
-            <RadioButton
+                android:orientation="horizontal"
+                >
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="SD2: "
+                    android:padding="16dp"
+                    />
+                <TextView
+                    android:id="@+id/pSD2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text=""
+                    android:padding="16dp"
+                    />
+            </LinearLayout>
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="Area"
-                android:padding="16dp"
-                />
+                android:orientation="horizontal"
+                >
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="S: "
+                    android:padding="16dp"
+                    />
+                <TextView
+                    android:id="@+id/pS"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text=""
+                    android:padding="16dp"
+                    />
+            </LinearLayout>
 
         </LinearLayout>
 

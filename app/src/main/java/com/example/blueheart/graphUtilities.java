@@ -452,14 +452,14 @@ public class graphUtilities {
 
 
         mScatterPlot.getViewport().setYAxisBoundsManual(true);
-        mScatterPlot.getViewport().setMaxY(1.015);
-        mScatterPlot.getViewport().setMinY(0.995);
+        mScatterPlot.getViewport().setMaxY(mScatterPlot.getViewport().getMaxY(true));
+        mScatterPlot.getViewport().setMinY(mScatterPlot.getViewport().getMinY(true));
 //
 //        //set manual y bounds
 
         mScatterPlot.getViewport().setXAxisBoundsManual(true);
-        mScatterPlot.getViewport().setMaxX(1.015);
-        mScatterPlot.getViewport().setMinX(0.995);
+        mScatterPlot.getViewport().setMaxX(mScatterPlot.getViewport().getMaxX(true));
+        mScatterPlot.getViewport().setMinX(mScatterPlot.getViewport().getMinX(true));
         //add the data to the series
         for(int i = 0;i <xyValueArray.size(); i++){
             try{
