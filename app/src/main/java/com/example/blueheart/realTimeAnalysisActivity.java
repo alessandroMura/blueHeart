@@ -24,6 +24,8 @@ import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.PointsGraphSeries;
 import com.karlotoy.perfectune.instance.PerfectTune;
 
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -627,8 +629,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
 
     public void changeFragmentTextView(String s1,String s2,String s) {
-//        android.app.Fragment frag = getFragmentManager().findFragmentById(R.id.fragment_frame);
-//        ((TextView) poincarFrag.getView().findViewById(R.id.pSD1)).setText(s);
        poincarePlotFragment frag=(poincarePlotFragment)poincarFrag.getFragmentManager().findFragmentById(R.id.fragment_frame);
        frag.changeFragmentTextView(s1,s2,s);
 
@@ -636,33 +636,38 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
 
     public double SD1(double [] in){
+        double [] xp;
+        double [] xm;
 
-        double []xp= Arrays.copyOfRange(in, 0, in.length);
-        double []xm= Arrays.copyOfRange(in, 1, in.length+1);
+        xp= Arrays.copyOfRange(in, 0, diff_indx);
+        xm= Arrays.copyOfRange(in, 1, diff_indx+1);
         double [] df=new double[xm.length];
+
         for (int ix=0;ix<xm.length;ix++){
             df[ix]=xp[ix]-xm[ix];
         }
-        double sd1=new Statistics(df).getStdDev()/Math.sqrt(2);
-        return sd1;
+        double sd1=new DescriptiveStatistics(df).getStandardDeviation();
+        return sd1/Math.sqrt(2);
     }
 
     public double SD2(double [] in){
 
-        double []xp= Arrays.copyOfRange(in, 0, in.length);
-        double []xm= Arrays.copyOfRange(in, 1, in.length+1);
+        double [] xp;
+        double [] xm;
+
+        xp= Arrays.copyOfRange(in, 0, diff_indx);
+        xm= Arrays.copyOfRange(in, 1, diff_indx+1);
         double [] df=new double[xm.length];
-        for (int ix=0;ix<xm.length;ix++){
+        for (int ix=0;ix<xm.length-1;ix++){
             df[ix]=xp[ix]+xm[ix];
         }
-        double sd1=new Statistics(df).getStdDev()/Math.sqrt(2);
-        return sd1;
+        double sd2=new DescriptiveStatistics(df).getVariance();
+        return sd2/Math.sqrt(2);
     }
 
     public double SArea(double sd1,double sd2){
         return Math.PI*sd1*sd2;
     }
-
 
     //    Activity Lifecycle
     @Override

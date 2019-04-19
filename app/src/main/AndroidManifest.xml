@@ -5,6 +5,7 @@
 
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:icon="@mipmap/ic_launcher"
@@ -12,9 +13,14 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
-        <activity android:name=".forgotPassword"></activity>
-        <activity android:name=".registrationActivity" /> <!-- Main Activity -->
-        <activity android:name=".MainActivity">
+        <activity android:name=".forgotPassword"
+            android:screenOrientation="portrait"
+            ></activity>
+        <activity android:name=".registrationActivity"
+            android:screenOrientation="portrait"
+            /> <!-- Main Activity -->
+        <activity android:name=".MainActivity"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -24,28 +30,36 @@
         <activity
             android:name=".deviceListActivity"
             android:label="@string/activity_device_list"
-            android:parentActivityName=".MainActivity">
+            android:parentActivityName=".MainActivity"
+            android:screenOrientation="portrait"
+            >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.blueheart.MainActivity" />
         </activity> <!-- Choose analysis tipe -->
         <activity
             android:name=".chooseAnalysisTypeActivity"
-            android:label="Choose Analysis Type">
+            android:label="Choose Analysis Type"
+            android:screenOrientation="portrait"
+            >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.blueheart.deviceListActivity" />
         </activity> <!-- Real time analysis -->
         <activity
             android:name=".realTimeAnalysisActivity"
-            android:label="Real Time Analysis">
+            android:label="Real Time Analysis"
+            android:screenOrientation="portrait"
+            >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.blueheart.chooseAnalysisTypeActivity" />
         </activity> <!-- Record and send login -->
         <activity
             android:name=".recordAndSendLogin"
-            android:label="Login">
+            android:label="Login"
+            android:screenOrientation="portrait"
+            >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.blueheart.chooseAnalysisTypeActivity" />
@@ -53,7 +67,9 @@
         <activity
             android:name=".recordAndSendActivity"
             android:label="Record and Send"
-            android:parentActivityName=".recordAndSendLogin">
+            android:parentActivityName=".recordAndSendLogin"
+            android:screenOrientation="portrait"
+            >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.blueheart.recordAndSendLogin" />

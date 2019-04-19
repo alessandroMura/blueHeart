@@ -23,7 +23,7 @@ public class Statistics {
         double temp = 0;
         for(double a :data)
             temp += (a-mean)*(a-mean);
-        return temp/(size-1);
+        return temp/(size);
     }
 
     double getStdDev() {

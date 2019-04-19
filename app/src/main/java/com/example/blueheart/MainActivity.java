@@ -62,12 +62,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                     startActivityForResult(intent, REQUEST_ENABLE_BT);
                     showToast(getApplicationContext(),"Bluetooth ON");
+
                 }
                 else {
                     showToast(getApplicationContext(),"Bluetooth is already on");
                 }
-
-
                 break;
 
 //            Case del button TURN OFF BLUETOOTH

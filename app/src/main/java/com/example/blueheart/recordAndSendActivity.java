@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -17,7 +18,9 @@ import com.github.mikephil.charting.charts.LineChart;
 import com.google.firebase.auth.FirebaseAuth;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import sew.RegularDataBlock;
 
@@ -33,6 +36,7 @@ import static com.example.blueheart.sensorUtilities.setupSensor;
 import static com.example.blueheart.sensorUtilities.tryConnect;
 import static com.example.blueheart.sensorUtilities.tryDisconnect;
 import static com.example.blueheart.sensorUtilities.tryStream;
+import org.apache.commons.math3.stat.descriptive.*;
 
 public class recordAndSendActivity extends AppCompatActivity {
 
@@ -59,6 +63,7 @@ public class recordAndSendActivity extends AppCompatActivity {
     private double rpeaktime;
     private double peaktimevector[]=new double[500];
     private double diffvector[]=new double[500];
+
     private float max=-100000;
     private float min=100000;
     private boolean lookfor=true;
@@ -205,8 +210,6 @@ public class recordAndSendActivity extends AppCompatActivity {
                     peakDetector(poincareValue,250,c);
                     c++;
         }
-
-
     }
 
     int countp=0;
@@ -220,7 +223,7 @@ public class recordAndSendActivity extends AppCompatActivity {
             countp=0;
             peaktimevector=new double[500];
             diff_indx=0;
-            diffvector=new double[500];
+
 
 
 //            for (int i=0;i<peaktimevector.length;i++) {
@@ -255,26 +258,25 @@ public class recordAndSendActivity extends AppCompatActivity {
                     double diff=peaktimevector[countp]-peaktimevector[countp-1];
 
                     if (diff>=0.6 && diff<=1.4000){
-                        diffvector[diff_indx]=diff;
-                        Log.v("t0","Diff between current r and previous  "+String.valueOf(diff));
-                        if (diff_indx>=1) {
 
-                            sd1=SD1(diffvector);
-                            sd2=SD2(diffvector);
-                            S=SArea(sd1,sd2);
-                            Log.v("t1","Diff between current r and previous  "+String.valueOf(sd1));
-                            Log.v("t2","Diff between current r and previous  "+String.valueOf(sd2));
-                            Log.v("t3","Diff between current r and previous  "+String.valueOf(S));
+                        diffvector[diff_indx] = diff;
+                        Log.v("t0","Diff between current r and previous  "+diff);
+                        sd1=SD1(diffvector);
+                        sd2=SD2(diffvector);
+                        S=SArea(sd1,sd2);
+                        Log.v("t1","Diff between current r and previous  "+sd1);
+                        Log.v("t2","Diff between current r and previous  "+ sd2);
+                        Log.v("t3","Diff between current r and previous  "+ S);
 
-                            runOnUiThread(new Runnable() {
-                                public void run() {
-                                    currentrr.setText(numberFormat.format(diffvector[diff_indx-1]));
-                                    currentsd1.setText(numberFormat.format(sd1));
-                                    currentsd2.setText(numberFormat.format(sd2));
-                                    currents.setText(numberFormat.format(S));
-                                }
-                            });
-                        }
+                        runOnUiThread(new Runnable() {
+                            public void run() {
+                                currentrr.setText(String.valueOf(diffvector[diff_indx-1]));
+                                currentsd1.setText(String.valueOf(sd1));
+                                currentsd2.setText(String.valueOf(sd2));
+                                currents.setText(String.valueOf(S));
+                            }
+                        });
+
                         diff_indx++;
                     }
                 }
@@ -295,31 +297,58 @@ public class recordAndSendActivity extends AppCompatActivity {
 
 
     public double SD1(double [] in){
+        double [] xp;
+        double [] xm;
 
-        double []xp= Arrays.copyOfRange(in, 0, in.length);
-        double []xm= Arrays.copyOfRange(in, 1, in.length+1);
+        xp= Arrays.copyOfRange(in, 0, diff_indx);
+        xm= Arrays.copyOfRange(in, 1, diff_indx+1);
         double [] df=new double[xm.length];
+
         for (int ix=0;ix<xm.length;ix++){
             df[ix]=xp[ix]-xm[ix];
         }
-        double sd1=new Statistics(df).getStdDev()/Math.sqrt(2);
-        return sd1;
+        double sd1=new DescriptiveStatistics(df).getStandardDeviation();
+        return sd1/Math.sqrt(2);
     }
 
     public double SD2(double [] in){
 
-        double []xp= Arrays.copyOfRange(in, 0, in.length);
-        double []xm= Arrays.copyOfRange(in, 1, in.length+1);
+        double [] xp;
+        double [] xm;
+
+        xp= Arrays.copyOfRange(in, 0, diff_indx);
+        xm= Arrays.copyOfRange(in, 1, diff_indx+1);
         double [] df=new double[xm.length];
-        for (int ix=0;ix<xm.length;ix++){
+        for (int ix=0;ix<xm.length-1;ix++){
             df[ix]=xp[ix]+xm[ix];
         }
-        double sd1=new Statistics(df).getStdDev()/Math.sqrt(2);
-        return sd1;
+        double sd2=new DescriptiveStatistics(df).getVariance();
+        return sd2/Math.sqrt(2);
     }
 
     public double SArea(double sd1,double sd2){
         return Math.PI*sd1*sd2;
+    }
+
+
+
+    /* Checks if external storage is available for read and write */
+    public boolean isExternalStorageWritable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            return true;
+        }
+        return false;
+    }
+
+    /* Checks if external storage is available to at least read */
+    public boolean isExternalStorageReadable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state) ||
+                Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+            return true;
+        }
+        return false;
     }
 
     @Override
