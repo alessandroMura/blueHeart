@@ -89,6 +89,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     private boolean lookfor=true;
     private int c=0;
     private int diff_indx=0;
+    private int lag=1;
 
     //Filtri non più utilizzati .....................................................................
     private HeartyFilter.SavGolayFilter savgol = new HeartyFilter.SavGolayFilter(1);
@@ -184,6 +185,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                         chart.setVisibility(View.GONE);
                         scatterchart.setVisibility(View.VISIBLE);
                         c=0;
+                        lag=1;
                         setFragment(poincarFrag,getSupportFragmentManager(),R.id.fragment_frame);
                         break;
                 }
@@ -565,6 +567,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 
 
 
+
 //            for (int i=0;i<peaktimevector.length;i++) {
 //                Log.v("Timing", "Peak Time Vector" + "------------" + String.valueOf(peaktimevector[i]));
 //            }
@@ -583,7 +586,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
 //                setPoincareData(chart,value0,0,visibility_range);
             }
 
-
         }else{
             if (in>min+delta && in<600){
                 timepeakdetector=(System.nanoTime() - startPeaks) / 1_000_000_000.0000000;
@@ -591,13 +593,13 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                 Log.v("Timing","Current peak time"+"------------"+String.valueOf(timepeakdetector));
                 peaktimevector[countp]=rpeaktime;
 
-                if(countp>=1) {
+                if(countp>=lag) {
                      diff = peaktimevector[countp] - peaktimevector[countp - 1];
                     if (diff >= 0.6 && diff <= 1.4000) {
                         diffvector[diff_indx] = diff;
-                        Log.v("Timing", "Diff between current r and previous  " + String.valueOf(diff));
-                        if (diff_indx >= 1) {
-                            initscatt(scatterchart,xyValueArray,xySeries,diffvector[diff_indx - 1],diffvector[diff_indx]);
+                        Log.v("Timing", "Diff between current r and previous:  " + String.valueOf(diff)+"Num: "+String.valueOf(diff_indx));
+                        if ((diff_indx>=lag) && (diff_indx % lag==0)) {
+                            initscatt(scatterchart,xyValueArray,xySeries,diffvector[diff_indx - lag],diffvector[diff_indx]);
 
                             sd1=SD1(diffvector);
                             sd2=SD2(diffvector);
@@ -607,9 +609,12 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                             runOnUiThread(new Runnable() {
                                 public void run() {
                                     changeFragmentTextView(String.valueOf(sd1),String.valueOf(sd2),String.valueOf(S));
+                                    changeLagTextView(String.valueOf(lag));
+
                                 }
                             });
                         }
+
                         diff_indx++;
                     }
                 }
@@ -631,6 +636,12 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     public void changeFragmentTextView(String s1,String s2,String s) {
        poincarePlotFragment frag=(poincarePlotFragment)poincarFrag.getFragmentManager().findFragmentById(R.id.fragment_frame);
        frag.changeFragmentTextView(s1,s2,s);
+
+    }
+
+    public void changeLagTextView(String nn) {
+        poincarePlotFragment frag=(poincarePlotFragment)poincarFrag.getFragmentManager().findFragmentById(R.id.fragment_frame);
+        frag.changeLagTextView(nn);
 
     }
 
@@ -761,11 +772,102 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     }
 
     @Override
+    public void fftSizePhase(int n) {
+        i = 0;
+        size = n;
+        in = new float[size];
+        complexArray = new Complex[size];
+        fftOut = new Complex[size];
+        out = new float[size / 2];
+        showToast(getApplicationContext(),String.valueOf(size));
+    }
+
+    @Override
+    public void selectLag(int number) {
+        int l=number;
+        if (number<1){
+            max=-100000;
+            min=100000;
+            lookfor=true;
+            c=0;
+            timepeakdetector=0;
+            countp=0;
+            diff_indx=0;
+            peaktimevector=new double[500];
+            diffvector=new double[500];
+            xyValueArray=new ArrayList<>();
+            xySeries = new PointsGraphSeries<>();
+            diff=0;
+            sd1=0;
+            scatterchart.removeAllSeries();
+            lag=1;
+            showToast(getApplicationContext(),"Lag: "+number+" must be >1");
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    changeLagTextView(String.valueOf(lag));
+                }
+            });
+        }
+
+        if (number>10){
+            max=-100000;
+            min=100000;
+            lookfor=true;
+            c=0;
+            timepeakdetector=0;
+            countp=0;
+            diff_indx=0;
+            peaktimevector=new double[500];
+            diffvector=new double[500];
+            xyValueArray=new ArrayList<>();
+            xySeries = new PointsGraphSeries<>();
+            diff=0;
+            sd1=0;
+            scatterchart.removeAllSeries();
+            lag=10;
+            showToast(getApplicationContext(),"Lag: "+number+" must be <10");
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    changeLagTextView(String.valueOf(lag));
+                }
+            });
+        }
+
+
+
+        if (number>=1 || number <=10){
+            max=-100000;
+            min=100000;
+            lookfor=true;
+            c=0;
+            timepeakdetector=0;
+            countp=0;
+            diff_indx=0;
+            peaktimevector=new double[500];
+            diffvector=new double[500];
+            xyValueArray=new ArrayList<>();
+            xySeries = new PointsGraphSeries<>();
+            diff=0;
+            sd1=0;
+            scatterchart.removeAllSeries();
+            lag=number;
+            showToast(getApplicationContext(),"Lag: "+lag);
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    changeLagTextView(String.valueOf(lag));
+                }
+            });
+        }
+    }
+
+    @Override
     public void timeSize(int n) {
         visibility_range = n;
         chart.fitScreen();
         showToast(getApplicationContext(),String.valueOf(visibility_range));
     }
+
+
 
     @Override
     public void timeSize2(int n) {

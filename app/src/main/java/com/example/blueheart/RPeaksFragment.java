@@ -21,7 +21,7 @@ public class RPeaksFragment extends Fragment implements View.OnClickListener, pa
 
 
     int p2=2;
-    int exp2=2;
+    int exp2=10;
 
 
 
@@ -92,6 +92,16 @@ public class RPeaksFragment extends Fragment implements View.OnClickListener, pa
 
     @Override
     public void timeSize2(int number) {
+
+    }
+
+    @Override
+    public void fftSizePhase(int number) {
+
+    }
+
+    @Override
+    public void selectLag(int number) {
 
     }
 

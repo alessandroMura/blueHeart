@@ -22,7 +22,7 @@ public class timeDomainFragment extends Fragment implements View.OnClickListener
     parameterSend time_size;
 
     int p=2;
-    int exp=2;
+    int exp=10;
 
     public timeDomainFragment(){
 
@@ -87,6 +87,16 @@ public class timeDomainFragment extends Fragment implements View.OnClickListener
 
     @Override
     public void timeSize2(int number) {
+
+    }
+
+    @Override
+    public void fftSizePhase(int number) {
+
+    }
+
+    @Override
+    public void selectLag(int number) {
 
     }
 

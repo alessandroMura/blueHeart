@@ -21,7 +21,7 @@ public class frequencyMagnitudeFragment extends Fragment implements View.OnClick
     View v;
 
     int p=2;
-    int exp=2;
+    int exp=4;
     private parameterSend sendFFTSize;
 
     public frequencyMagnitudeFragment(){
@@ -85,6 +85,16 @@ public class frequencyMagnitudeFragment extends Fragment implements View.OnClick
 
     @Override
     public void timeSize2(int number) {
+
+    }
+
+    @Override
+    public void fftSizePhase(int number) {
+
+    }
+
+    @Override
+    public void selectLag(int number) {
 
     }
 
