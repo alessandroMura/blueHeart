@@ -1,10 +1,17 @@
 package com.example.blueheart;
 
+import android.Manifest;
 import android.app.Activity;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.os.Environment;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -13,10 +20,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.google.firebase.auth.FirebaseAuth;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -75,6 +86,15 @@ public class recordAndSendActivity extends AppCompatActivity {
 
 
 
+    private int STORAGE_PERMISSION_CODE = 1;
+    private boolean onSave;
+    private double [] val=new double[1000];
+    private int i;
+    public String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/bluheart";
+    List<Double> vallist = new ArrayList<Double>();
+
+
+
 
     private FirebaseAuth firebaseAuth;
 
@@ -92,6 +112,41 @@ public class recordAndSendActivity extends AppCompatActivity {
         currents=findViewById(R.id.svalue);
         chart=findViewById(R.id.recchart);
         toneG = new ToneGenerator(AudioManager.STREAM_ALARM, 50);
+
+        File dir = new File(path);
+        dir.mkdirs();
+
+        if (ContextCompat.checkSelfPermission(recordAndSendActivity.this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(recordAndSendActivity.this, "You have already granted this permission!",
+                    Toast.LENGTH_SHORT).show();
+        } else {
+            requestStoragePermission();
+        }
+
+
+
+
+
+        startb.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onSave=true;
+                vallist.clear();
+                i=0;
+            }
+        });
+
+        stop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onSave=false;
+                i=0;
+                writeFile2();
+
+
+            }
+        });
 
 
         firebaseAuth=FirebaseAuth.getInstance();
@@ -277,6 +332,16 @@ public class recordAndSendActivity extends AppCompatActivity {
                             }
                         });
 
+                        if (onSave){
+//                            val[i]=sd1;
+                            vallist.add(diffvector[diff_indx]);
+                            vallist.add(sd1);
+                            vallist.add(sd2);
+                            vallist.add(S);
+
+                            i++;
+                        }
+
                         diff_indx++;
                     }
                 }
@@ -332,23 +397,114 @@ public class recordAndSendActivity extends AppCompatActivity {
 
 
 
-    /* Checks if external storage is available for read and write */
-    public boolean isExternalStorageWritable() {
-        String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state)) {
-            return true;
+    public void writeFile(){
+        if(isExternalStorageWritable() && checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)){
+            File textFile = new File(path, "savedFile.txt");
+            try{
+                FileOutputStream fos = new FileOutputStream(textFile,true);
+
+
+                for(int j=0; j<val.length; j++) {
+                    String s = "SD1: " + val[j] + "\n";
+                    fos.write(s.getBytes());
+                }
+
+                fos.close();
+
+                Toast.makeText(this, "File Saved.", Toast.LENGTH_SHORT).show();
+            }catch (IOException e){
+                e.printStackTrace();
+            }
+        }else{
+            Toast.makeText(this, "Cannot Write to External Storage.", Toast.LENGTH_SHORT).show();
         }
-        return false;
     }
 
-    /* Checks if external storage is available to at least read */
-    public boolean isExternalStorageReadable() {
-        String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state) ||
-                Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-            return true;
+    public void writeFile2(){
+        if(isExternalStorageWritable() && checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)){
+            File textFile = new File(path, "savedFile.txt");
+            if(textFile.exists()){
+                textFile.delete();
+                try {
+                    textFile.createNewFile();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            try{
+                FileOutputStream fos = new FileOutputStream(textFile,true);
+
+
+
+                for(int j=0; j<vallist.size()-4; j=j+4) {
+                    String s = "RR: " + vallist.get(j) +" SD1: "+vallist.get(j+1)+" SD2: "+vallist.get(j+2)+" S: "+vallist.get(j+3)+ "\n";
+                    fos.write(s.getBytes());
+                }
+
+                fos.close();
+
+                Toast.makeText(this, "File Saved.", Toast.LENGTH_SHORT).show();
+            }catch (IOException e){
+                e.printStackTrace();
+            }
+        }else{
+            Toast.makeText(this, "Cannot Write to External Storage.", Toast.LENGTH_SHORT).show();
         }
-        return false;
+    }
+
+    public boolean checkPermission(String permission){
+        int check = ContextCompat.checkSelfPermission(this, permission);
+        return (check == PackageManager.PERMISSION_GRANTED);
+    }
+
+    private boolean isExternalStorageWritable(){
+        if(Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())){
+            Log.i("State","Yes, it is writable!");
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    private void requestStoragePermission() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+
+            new AlertDialog.Builder(this)
+                    .setTitle("Permission needed")
+                    .setMessage("This permission is needed for writing of txt files on external memory.")
+                    .setPositiveButton("ok", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            ActivityCompat.requestPermissions(recordAndSendActivity.this,
+                                    new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_PERMISSION_CODE);
+                        }
+                    })
+                    .setNegativeButton("cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    })
+                    .create().show();
+
+        } else {
+            ActivityCompat.requestPermissions(this,
+                    new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_PERMISSION_CODE);
+        }
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == STORAGE_PERMISSION_CODE)  {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Permission GRANTED", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Permission DENIED", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     @Override
