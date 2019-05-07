@@ -6,6 +6,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -53,15 +54,23 @@ public class timeDomainFragment extends Fragment implements View.OnClickListener
             case R.id.minus_button_time:
                 exp--;
                 int res1 = (int) Math.pow(p, exp);
+                if (res1<=128){
+                    res1=128;
+                    exp=7;
+                }
                 samples_number.setText(String.valueOf(res1));
                 time_size.timeSize(res1);
                 break;
             default:
                 break;
-
-
         }
 
+    }
+
+
+    public void changeTimeTextView(String num){
+        TextView textlag = (TextView) getView().findViewById(R.id.time_samples);
+        textlag.setText(num);
     }
 
     @Override
@@ -69,7 +78,6 @@ public class timeDomainFragment extends Fragment implements View.OnClickListener
         super.onAttach(context);
         try {
             time_size = (parameterSend) context;
-
         } catch (ClassCastException ignored) {
 
         }
@@ -101,9 +109,16 @@ public class timeDomainFragment extends Fragment implements View.OnClickListener
     }
 
     @Override
-    public String sendString() {
-        return null;
+    public void onResume() {
+        super.onResume();
+        Log.v("xxxx","onResume called");
+        realTimeAnalysisActivity r;
+        r=(realTimeAnalysisActivity)getActivity();
+        time_size.timeSize(r.getVisibility_range());
+
     }
+
+
 
 
 }

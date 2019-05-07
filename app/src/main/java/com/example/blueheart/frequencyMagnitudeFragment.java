@@ -6,6 +6,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,7 +22,7 @@ public class frequencyMagnitudeFragment extends Fragment implements View.OnClick
     View v;
 
     int p=2;
-    int exp=4;
+    int exp=8;
     private parameterSend sendFFTSize;
 
     public frequencyMagnitudeFragment(){
@@ -39,6 +40,7 @@ public class frequencyMagnitudeFragment extends Fragment implements View.OnClick
         plusb.setOnClickListener(this);
         fftsize=v.findViewById(R.id.size_fft);
 
+
         return v;
     }
 
@@ -54,6 +56,11 @@ public class frequencyMagnitudeFragment extends Fragment implements View.OnClick
             case R.id.minus_button:
                 exp--;
                 int res1 = (int) Math.pow(p, exp);
+
+                if (res1<=128){
+                    res1=128;
+                    exp=7;
+                }
                 fftsize.setText(String.valueOf(res1));
                 sendFFTSize.fftSize(res1);
                 break;
@@ -72,6 +79,22 @@ public class frequencyMagnitudeFragment extends Fragment implements View.OnClick
 
         }
     }
+
+    public void changeMagTextView(String num){
+        TextView textlag = (TextView) getView().findViewById(R.id.size_fft);
+        textlag.setText(num);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.v("xxxx","onResume called");
+        realTimeAnalysisActivity r;
+        r=(realTimeAnalysisActivity)getActivity();
+        sendFFTSize.fftSize(r.getSize());
+
+    }
+
 
     @Override
     public void fftSize(int number) {
@@ -98,8 +121,5 @@ public class frequencyMagnitudeFragment extends Fragment implements View.OnClick
 
     }
 
-    @Override
-    public String sendString() {
-        return null;
-    }
+
 }

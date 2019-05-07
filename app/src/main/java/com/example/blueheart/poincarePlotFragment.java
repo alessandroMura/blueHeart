@@ -21,7 +21,6 @@ public class poincarePlotFragment extends Fragment implements View.OnClickListen
     Button minusb;
     TextView samples_number;
     parameterSend lag_size;
-
     int lag=1;
 
 
@@ -42,8 +41,7 @@ public class poincarePlotFragment extends Fragment implements View.OnClickListen
         plusb.setOnClickListener(this);
         minusb.setOnClickListener(this);
         samples_number=v.findViewById(R.id.size_lag);
-
-
+        samples_number.setText(String.valueOf(1));
         return v;
     }
 
@@ -79,8 +77,6 @@ public class poincarePlotFragment extends Fragment implements View.OnClickListen
                 break;
             default:
                 break;
-
-
         }
 
     }
@@ -98,7 +94,6 @@ public class poincarePlotFragment extends Fragment implements View.OnClickListen
 
     @Override
     public void selectLag(int number) {
-
     }
 
     @Override
@@ -121,10 +116,4 @@ public class poincarePlotFragment extends Fragment implements View.OnClickListen
 
     }
 
-
-
-    @Override
-    public String sendString() {
-        return null;
-    }
 }

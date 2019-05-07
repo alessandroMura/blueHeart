@@ -8,5 +8,4 @@ interface parameterSend {
     void timeSize2(int number);
     void fftSizePhase(int number);
     void selectLag(int number);
-    String sendString();
 }

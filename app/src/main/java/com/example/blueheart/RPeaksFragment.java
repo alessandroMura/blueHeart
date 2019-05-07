@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -56,6 +57,10 @@ public class RPeaksFragment extends Fragment implements View.OnClickListener, pa
             case R.id.minus_button_time:
                 exp2--;
                 int res1 = (int) Math.pow(p2, exp2);
+                if (res1<=128){
+                    res1=128;
+                    exp2=7;
+                }
                 samples_number2.setText(String.valueOf(res1));
                 time_size2.timeSize2(res1);
 
@@ -66,6 +71,12 @@ public class RPeaksFragment extends Fragment implements View.OnClickListener, pa
 
         }
 
+    }
+
+
+    public void changeTime2TextView(String num){
+        TextView textlag = (TextView) getView().findViewById(R.id.time_samples);
+        textlag.setText(num);
     }
 
 
@@ -106,9 +117,12 @@ public class RPeaksFragment extends Fragment implements View.OnClickListener, pa
     }
 
     @Override
-    public String sendString() {
-        return null;
+    public void onResume() {
+        super.onResume();
+        Log.v("xxxx","onResume called");
+        realTimeAnalysisActivity r=new realTimeAnalysisActivity();
+        r=(realTimeAnalysisActivity)getActivity();
+        time_size2.timeSize2(r.getVisibility_range2());
+
     }
-
-
 }

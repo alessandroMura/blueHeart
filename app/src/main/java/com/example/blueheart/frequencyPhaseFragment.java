@@ -5,6 +5,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,7 +22,7 @@ public class frequencyPhaseFragment extends Fragment implements View.OnClickList
     View vp;
 
     int pp=2;
-    int expp=4;
+    int expp=8;
     private parameterSend sendFFTSizep;
 
     public frequencyPhaseFragment(){
@@ -39,6 +40,7 @@ public class frequencyPhaseFragment extends Fragment implements View.OnClickList
         minusbp.setOnClickListener(this);
         plusbp.setOnClickListener(this);
         fftsizep=vp.findViewById(R.id.size_fft);
+        fftsizep.setText(String.valueOf(256));
 
         return vp;
     }
@@ -51,17 +53,36 @@ public class frequencyPhaseFragment extends Fragment implements View.OnClickList
                 expp++;
                 int res = (int) Math.pow(pp, expp);
                 fftsizep.setText(String.valueOf(res));
-                sendFFTSizep.fftSize(res);
+                sendFFTSizep.fftSizePhase(res);
                 break;
             case R.id.minus_button:
                 expp--;
                 int res1 = (int) Math.pow(pp, expp);
+                if (res1<=128){
+                    res1=128;
+                    expp=7;
+                }
                 fftsizep.setText(String.valueOf(res1));
-                sendFFTSizep.fftSize(res1);
+                sendFFTSizep.fftSizePhase(res1);
                 break;
             default:
                 break;
         }
+    }
+
+    public void changePhaTextView(String num){
+        TextView textlag = (TextView) getView().findViewById(R.id.size_fft);
+        textlag.setText(num);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.v("xxxx","onResume called");
+        realTimeAnalysisActivity r;
+        r=(realTimeAnalysisActivity)getActivity();
+        sendFFTSizep.fftSizePhase(r.getSize());
+
     }
 
     @Override
@@ -88,11 +109,6 @@ public class frequencyPhaseFragment extends Fragment implements View.OnClickList
     @Override
     public void timeSize2(int number) {
 
-    }
-
-    @Override
-    public String sendString() {
-        return null;
     }
 
     @Override
