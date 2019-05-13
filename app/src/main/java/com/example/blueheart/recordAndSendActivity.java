@@ -1,13 +1,18 @@
 package com.example.blueheart;
 
 import android.Manifest;
+import android.app.ActionBar;
 import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -18,6 +23,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -50,6 +56,38 @@ import static com.example.blueheart.sensorUtilities.tryStream;
 import org.apache.commons.math3.stat.descriptive.*;
 
 public class recordAndSendActivity extends AppCompatActivity {
+
+    private static final String TAG = "recordAndSendActivity";
+
+    /**
+     * Name of the connected device
+     */
+    private String mConnectedDeviceName = null;
+
+    /**
+     * Array adapter for the conversation thread
+     */
+    private ArrayAdapter<String> mConversationArrayAdapter;
+
+    /**
+     * String buffer for outgoing messages
+     */
+    private StringBuffer mOutStringBuffer;
+
+    /**
+     * Local Bluetooth adapter
+     */
+    private BluetoothAdapter mBluetoothAdapter = null;
+
+    /**
+     * Member object for the chat services
+     */
+    private BluetoothChatService mChatService = null;
+
+    // Intent request codes
+    private static final int REQUEST_CONNECT_DEVICE_SECURE = 1;
+    private static final int REQUEST_CONNECT_DEVICE_INSECURE = 2;
+    private static final int REQUEST_ENABLE_BT = 3;
 
     private Button startb,stop,send;
     private TextView currentrr,currentsd1,currentsd2,currents;
@@ -101,6 +139,8 @@ public class recordAndSendActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Get local Bluetooth adapter
+        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         setContentView(R.layout.activity_record_and_send);
 
         startb=findViewById(R.id.startrec);
@@ -111,7 +151,7 @@ public class recordAndSendActivity extends AppCompatActivity {
         currentsd2=findViewById(R.id.sd2value);
         currents=findViewById(R.id.svalue);
         chart=findViewById(R.id.recchart);
-        toneG = new ToneGenerator(AudioManager.STREAM_ALARM, 50);
+        toneG = new ToneGenerator(AudioManager.STREAM_ALARM, 30);
 
         File dir = new File(path);
         dir.mkdirs();
@@ -152,6 +192,23 @@ public class recordAndSendActivity extends AppCompatActivity {
         firebaseAuth=FirebaseAuth.getInstance();
 
         setup();
+
+        send.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+
+
+                if (mChatService.getState()!=BluetoothChatService.STATE_CONNECTED) {
+                    Intent serverIntent = new Intent(getApplicationContext(), DeviceListActivity2.class);
+                    startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE_SECURE);
+                    Toast.makeText(getApplicationContext(),"Waiting...",Toast.LENGTH_SHORT).show();
+                }else{
+                    sendFile();
+                }
+
+            }
+        });
 
 
     }
@@ -194,6 +251,46 @@ public class recordAndSendActivity extends AppCompatActivity {
         setupThread.start();
 
 
+    }
+
+    private void setupChat() {
+        mChatService = new BluetoothChatService(getParent(), mHandler);
+        // Initialize the buffer for outgoing messages
+        mOutStringBuffer = new StringBuffer("");
+    }
+
+    private void ensureDiscoverable() {
+        if (mBluetoothAdapter.getScanMode() !=
+                BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
+            Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+            discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
+            startActivity(discoverableIntent);
+        }
+    }
+
+
+    /**
+     * Sends a message.
+     *
+     * @param message A string of text to send.
+     */
+    private void sendMessage(String message) {
+        // Check that we're actually connected before trying anything
+        if (mChatService.getState() != BluetoothChatService.STATE_CONNECTED) {
+            Toast.makeText(getParent(), "You are not connected to a device", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Check that there's actually something to send
+        if (message.length() > 0) {
+            // Get the message bytes and tell the BluetoothChatService to write
+            byte[] send = message.getBytes();
+            mChatService.write(send);
+
+            // Reset out string buffer to zero and clear the edit text field
+            mOutStringBuffer.setLength(0);
+//            mOutEditText.setText(mOutStringBuffer);
+        }
     }
 
     private void runDataStreamThread() {
@@ -312,7 +409,7 @@ public class recordAndSendActivity extends AppCompatActivity {
                 if(countp>=1){
                     double diff=peaktimevector[countp]-peaktimevector[countp-1];
 
-                    if (diff>=0.6 && diff<=1.4000){
+                    if (diff>=0.3 && diff<=1.4000){
 
                         diffvector[diff_indx] = diff;
                         Log.v("t0","Diff between current r and previous  "+diff);
@@ -396,30 +493,6 @@ public class recordAndSendActivity extends AppCompatActivity {
     }
 
 
-
-    public void writeFile(){
-        if(isExternalStorageWritable() && checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)){
-            File textFile = new File(path, "savedFile.txt");
-            try{
-                FileOutputStream fos = new FileOutputStream(textFile,true);
-
-
-                for(int j=0; j<val.length; j++) {
-                    String s = "SD1: " + val[j] + "\n";
-                    fos.write(s.getBytes());
-                }
-
-                fos.close();
-
-                Toast.makeText(this, "File Saved.", Toast.LENGTH_SHORT).show();
-            }catch (IOException e){
-                e.printStackTrace();
-            }
-        }else{
-            Toast.makeText(this, "Cannot Write to External Storage.", Toast.LENGTH_SHORT).show();
-        }
-    }
-
     public void writeFile2(){
         if(isExternalStorageWritable() && checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)){
             File textFile = new File(path, "savedFile.txt");
@@ -435,10 +508,8 @@ public class recordAndSendActivity extends AppCompatActivity {
             try{
                 FileOutputStream fos = new FileOutputStream(textFile,true);
 
-
-
                 for(int j=0; j<vallist.size()-4; j=j+4) {
-                    String s = "RR: " + vallist.get(j) +" SD1: "+vallist.get(j+1)+" SD2: "+vallist.get(j+2)+" S: "+vallist.get(j+3)+ "\n";
+                    String s ="N: "+j+ " --RR: " + vallist.get(j) +" SD1: "+vallist.get(j+1)+" SD2: "+vallist.get(j+2)+" S: "+vallist.get(j+3)+ "\n";
                     fos.write(s.getBytes());
                 }
 
@@ -453,19 +524,142 @@ public class recordAndSendActivity extends AppCompatActivity {
         }
     }
 
-    public boolean checkPermission(String permission){
-        int check = ContextCompat.checkSelfPermission(this, permission);
-        return (check == PackageManager.PERMISSION_GRANTED);
-    }
 
-    private boolean isExternalStorageWritable(){
-        if(Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())){
-            Log.i("State","Yes, it is writable!");
-            return true;
-        }else{
-            return false;
+    public void sendFile(){
+        for(int j=0; j<vallist.size()-4; j=j+4) {
+            String s ="N: "+j+ " --RR: " + vallist.get(j) +" SD1: "+vallist.get(j+1)+" SD2: "+vallist.get(j+2)+" S: "+vallist.get(j+3)+ "\n";
+            sendMessage(s);
         }
     }
+
+
+    private void setStatus(int resId) {
+        Activity activity = getParent();
+        if (null == activity) {
+            return;
+        }
+        final ActionBar actionBar = activity.getActionBar();
+        if (null == actionBar) {
+            return;
+        }
+        actionBar.setSubtitle(resId);
+    }
+
+    /**
+     * Updates the status on the action bar.
+     *
+     * @param subTitle status
+     */
+    private void setStatus(CharSequence subTitle) {
+        Activity activity = getParent();
+        if (null == activity) {
+            return;
+        }
+        final ActionBar actionBar = activity.getActionBar();
+        if (null == actionBar) {
+            return;
+        }
+        actionBar.setSubtitle(subTitle);
+    }
+
+    /**
+     * The Handler that gets information back from the BluetoothChatService
+     */
+    private final Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            Activity activity=getParent();
+            switch (msg.what) {
+                case Constants.MESSAGE_STATE_CHANGE:
+                    switch (msg.arg1) {
+                        case BluetoothChatService.STATE_CONNECTED:
+                            setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
+//                            mConversationArrayAdapter.clear();
+                            break;
+                        case BluetoothChatService.STATE_CONNECTING:
+                            setStatus(R.string.title_connecting);
+                            break;
+                        case BluetoothChatService.STATE_LISTEN:
+                        case BluetoothChatService.STATE_NONE:
+                            setStatus(R.string.title_not_connected);
+                            break;
+                    }
+                    break;
+                case Constants.MESSAGE_WRITE:
+                    byte[] writeBuf = (byte[]) msg.obj;
+                    // construct a string from the buffer
+                    String writeMessage = new String(writeBuf);
+//                    mConversationArrayAdapter.add("Me:  " + writeMessage);
+                    break;
+                case Constants.MESSAGE_READ:
+                    byte[] readBuf = (byte[]) msg.obj;
+                    // construct a string from the valid bytes in the buffer
+                    String readMessage = new String(readBuf, 0, msg.arg1);
+                    mConversationArrayAdapter.add(mConnectedDeviceName + ":  " + readMessage);
+                    break;
+                case Constants.MESSAGE_DEVICE_NAME:
+                    // save the connected device's name
+                    mConnectedDeviceName = msg.getData().getString(Constants.DEVICE_NAME);
+                    if (null != activity) {
+                        Toast.makeText(activity, "Connected to "
+                                + mConnectedDeviceName, Toast.LENGTH_SHORT).show();
+                    }
+                    break;
+                case Constants.MESSAGE_TOAST:
+                    if (null != activity) {
+                        Toast.makeText(activity, msg.getData().getString(Constants.TOAST),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                    break;
+            }
+        }
+    };
+
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case REQUEST_CONNECT_DEVICE_SECURE:
+                // When DeviceListActivity2 returns with a device to connect
+                if (resultCode == Activity.RESULT_OK) {
+                    connectDevice(data, true);
+                }
+                break;
+            case REQUEST_CONNECT_DEVICE_INSECURE:
+                // When DeviceListActivity2 returns with a device to connect
+                if (resultCode == Activity.RESULT_OK) {
+                    connectDevice(data, false);
+                }
+                break;
+            case REQUEST_ENABLE_BT:
+                // When the request to enable Bluetooth returns
+                if (resultCode == Activity.RESULT_OK) {
+                    // Bluetooth is now enabled, so set up a chat session
+                    setupChat();
+                } else {
+                    // User did not enable Bluetooth or an error occurred
+                    Log.d(TAG, "BT not enabled");
+                    Toast.makeText(getParent(), R.string.bt_not_enabled_leaving,
+                            Toast.LENGTH_SHORT).show();
+                    getParent().finish();
+                }
+        }
+    }
+
+    /**
+     * Establish connection with other device
+     *
+     * @param data   An {@link Intent} with {@link DeviceListActivity2#EXTRA_DEVICE_ADDRESS} extra.
+     * @param secure Socket Security type - Secure (true) , Insecure (false)
+     */
+    private void connectDevice(Intent data, boolean secure) {
+        // Get the device MAC address
+        String address = data.getExtras()
+                .getString(DeviceListActivity2.EXTRA_DEVICE_ADDRESS);
+        // Get the BluetoothDevice object
+        BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+        // Attempt to connect to the device
+        mChatService.connect(device, secure);
+    }
+
 
     private void requestStoragePermission() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(this,
@@ -495,6 +689,54 @@ public class recordAndSendActivity extends AppCompatActivity {
         }
     }
 
+    private boolean isExternalStorageWritable(){
+        if(Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())){
+            Log.i("State","Yes, it is writable!");
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    public boolean checkPermission(String permission){
+        int check = ContextCompat.checkSelfPermission(this, permission);
+        return (check == PackageManager.PERMISSION_GRANTED);
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.bluetooth_chat,menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.secure_connect_scan: {
+                // Launch the DeviceListActivity2 to see devices and do scan
+                Intent serverIntent = new Intent(getApplicationContext(), DeviceListActivity2.class);
+                startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE_SECURE);
+                return true;
+            }
+            case R.id.logoutmenu:{
+                Logout();
+                return true;
+            }
+//            case R.id.insecure_connect_scan: {
+//                // Launch the DeviceListActivity2 to see devices and do scan
+//                Intent serverIntent = new Intent(getApplicationContext(), DeviceListActivity2.class);
+//                startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE_INSECURE);
+//                return true;
+//            }
+//            case R.id.discoverable: {
+//                // Ensure this device is discoverable by others
+//                ensureDiscoverable();
+//                return true;
+//            }
+        }
+        return false;
+    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -513,6 +755,7 @@ public class recordAndSendActivity extends AppCompatActivity {
         super.onDestroy();
 //        removeDataSet();
 
+        canStream=false;
         if (thread3 != null) {
             thread3.interrupt();
             canStream = false;
@@ -520,6 +763,10 @@ public class recordAndSendActivity extends AppCompatActivity {
             tryDisconnect(sewDevice);
             Log.v("sewdevice", "Sew State:  " + String.valueOf(isConnected(sewDevice)));
             Log.v("sewdevice", "StreamThread interrupted:  " + String.valueOf(thread3.isInterrupted()));
+        }
+
+        if (mChatService != null) {
+            mChatService.stop();
         }
 
     }
@@ -531,7 +778,6 @@ public class recordAndSendActivity extends AppCompatActivity {
         c=0;
         timepeakdetector=0;
     }
-
 
     private void Logout(){
         firebaseAuth.signOut();
@@ -548,19 +794,34 @@ public class recordAndSendActivity extends AppCompatActivity {
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.record_and_send_menu,menu);
-        return true;
+    protected void onResume() {
+        super.onResume();
 
+        // Performing this check in onResume() covers the case in which BT was
+        // not enabled during onStart(), so we were paused to enable it...
+        // onResume() will be called when ACTION_REQUEST_ENABLE activity returns.
+        if (mChatService != null) {
+            // Only if the state is STATE_NONE, do we know that we haven't started already
+            if (mChatService.getState() == BluetoothChatService.STATE_NONE) {
+                // Start the Bluetooth chat services
+                mChatService.start();
+            }
+        }
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch(item.getItemId()){
-            case R.id.logoutmenu:{
-                Logout();
-            }
+    public void onStart() {
+        super.onStart();
+        // If BT is not on, request that it be enabled.
+        // setupChat() will then be called during onActivityResult
+        if (!mBluetoothAdapter.isEnabled()) {
+            Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
+            // Otherwise, setup the chat session
+        } else if (mChatService == null) {
+            setupChat();
         }
-        return super.onOptionsItemSelected(item);
     }
+
+
 }
