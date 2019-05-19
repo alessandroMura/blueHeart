@@ -43,8 +43,6 @@ import sew.RegularDataBlock;
 
 import static com.example.blueheart.bluheartConstants.SEW_SAMPLING_RATE;
 import static com.example.blueheart.deviceListActivity.sewDevice;
-import static com.example.blueheart.graphUtilities.initscatt;
-import static com.example.blueheart.graphUtilities.setData0;
 import static com.example.blueheart.graphUtilities.setPoincareData;
 import static com.example.blueheart.graphUtilities.setupChart;
 import static com.example.blueheart.sensorUtilities.isConnected;
@@ -495,7 +493,7 @@ public class recordAndSendActivity extends AppCompatActivity {
 
     public void writeFile2(){
         if(isExternalStorageWritable() && checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)){
-            File textFile = new File(path, "savedFile.txt");
+            File textFile = new File(path, "File_" + System.nanoTime() + ".txt");
             if(textFile.exists()){
                 textFile.delete();
                 try {
