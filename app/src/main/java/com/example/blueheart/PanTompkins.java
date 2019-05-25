@@ -963,7 +963,6 @@ public class PanTompkins extends LmeFilter
 						QRS.qrsCurrent.feat_width = (long) ( (QRS.qrsCurrent.sIdx - QRS.qrsCurrent.qIdx) * wndIntCompensation * samplingTime);
 					}
 
-
 					// find a template
 					if (QRS.template1.classification == QRS.QrsClass.INVALID || QRS.template2.classification == QRS.QrsClass.INVALID)
 					{

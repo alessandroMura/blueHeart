@@ -24,8 +24,6 @@ public class RPeaksFragment extends Fragment implements View.OnClickListener, pa
     int p2=2;
     int exp2=10;
 
-
-
     public RPeaksFragment(){
 
     }

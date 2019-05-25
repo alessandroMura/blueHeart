@@ -71,8 +71,6 @@ public class deviceListActivity extends AppCompatActivity {
             showToast(getApplicationContext(),"Turn on bluetooth to get paired devices");
         }
 
-
-
     }
 
 }

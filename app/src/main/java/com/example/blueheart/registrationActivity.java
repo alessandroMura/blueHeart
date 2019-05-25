@@ -51,8 +51,6 @@ public class registrationActivity extends AppCompatActivity {
                             }
                         }
                     });
-
-
                 }
             }
         });

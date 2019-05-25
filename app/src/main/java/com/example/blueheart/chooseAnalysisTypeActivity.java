@@ -37,8 +37,6 @@ public class chooseAnalysisTypeActivity extends AppCompatActivity implements Vie
                 break;
             default:
                 break;
-
-
         }
 
     }

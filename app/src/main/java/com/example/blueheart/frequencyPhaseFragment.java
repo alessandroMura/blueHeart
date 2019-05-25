@@ -15,12 +15,10 @@ import android.widget.TextView;
 
 public class frequencyPhaseFragment extends Fragment implements View.OnClickListener, parameterSend {
 
-
     Button plusbp;
     Button minusbp;
     TextView fftsizep;
     View vp;
-
     int pp=2;
     int expp=8;
     private parameterSend sendFFTSizep;

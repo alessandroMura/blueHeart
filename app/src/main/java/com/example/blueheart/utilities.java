@@ -16,8 +16,6 @@ public class utilities {
         FragmentTransaction fragtransaction = fragmentManager.beginTransaction();
         fragtransaction.replace(id, fragment);
         fragtransaction.commit();
-
     }
-
 
 }

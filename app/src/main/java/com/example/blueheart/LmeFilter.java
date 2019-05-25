@@ -21,8 +21,6 @@
 package com.example.blueheart;
 
 import java.security.InvalidParameterException;
-import java.util.ArrayList;
-import java.util.List;
 
 import de.lme.plotview.FloatValueList;
 

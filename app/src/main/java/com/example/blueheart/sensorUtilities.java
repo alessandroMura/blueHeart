@@ -93,7 +93,6 @@ public class sensorUtilities {
         } catch (DeviceException e) {
             e.printStackTrace();
         }
-
     }
 
     public static boolean isInStreaming(SewBluetoothDevice s) {

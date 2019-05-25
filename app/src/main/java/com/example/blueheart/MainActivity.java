@@ -14,7 +14,6 @@ import static com.example.blueheart.utilities.*;
 //Activity principale che gestisce l'accensione del bluetooth
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-
     //    Dichiarazione variabili globali interne utilizzate nella classe Main
     static public String MAIN_BUTTON_MESSAGE="MainActivity Button";
     private static final int REQUEST_ENABLE_BT = 0;
@@ -41,10 +40,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Button device_list= findViewById(R.id.device_list);
         device_list.setOnClickListener(this);
 
-
         //get dell'adapter di default
         mBlueAdapter = BluetoothAdapter.getDefaultAdapter();
-
 
     }
 
@@ -103,7 +100,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Intent deviceListIntent = new Intent(this, deviceListActivity.class);
                 Log.v(MAIN_BUTTON_MESSAGE, "Device_list clicked!");
 
-
                 showToast(getApplicationContext(),"Listing Paired Devices");
                 startActivity(deviceListIntent);
                 break;
@@ -115,9 +111,5 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     static public String toString(String s) {
         return s;
     }
-
-//    static public BluetoothAdapter getBlueAdapter(){
-//    return mBlueAdapter;
-//    }
 
 }

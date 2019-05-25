@@ -215,6 +215,7 @@ public class FFT {
         Complex[] c = cconvolve(x, x);
         show(c, "c = cconvolve(x, x)");
 
+
         // linear convolution of x with itself
         Complex[] d = convolve(x, x);
         show(d, "d = convolve(x, x)");

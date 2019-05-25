@@ -20,7 +20,6 @@ public class frequencyMagnitudeFragment extends Fragment implements View.OnClick
     Button minusb;
     TextView fftsize;
     View v;
-
     int p=2;
     int exp=8;
     private parameterSend sendFFTSize;

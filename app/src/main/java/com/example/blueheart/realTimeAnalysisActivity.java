@@ -1,7 +1,5 @@
 package com.example.blueheart;
 
-
-import android.graphics.Color;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.os.Bundle;
@@ -12,23 +10,14 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
-import android.widget.TextView;
-
-import com.github.mikephil.charting.charts.CombinedChart;
 import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.charts.ScatterChart;
-import com.github.mikephil.charting.data.CombinedData;
-import com.github.mikephil.charting.data.Entry;
+
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.PointsGraphSeries;
-import com.karlotoy.perfectune.instance.PerfectTune;
-
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
-
 import java.util.ArrayList;
 import java.util.Arrays;
-
 import sew.RegularDataBlock;
 
 import static com.example.blueheart.deviceListActivity.sewDevice;
@@ -69,7 +58,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     private int whatFragment;
     private int i = 0;
 
-
     //    Parametri, oggetti e variabili per il filtraggio ..........................................
     private long start;
     private long startPeaks;
@@ -89,15 +77,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     private int diff_indx=0;
     private int lag=1;
 
-    //Filtri non più utilizzati .....................................................................
-    private HeartyFilter.SavGolayFilter savgol = new HeartyFilter.SavGolayFilter(1);
-    private HeartyFilter.StatFilter stats = new HeartyFilter.StatFilter();
-    private LmeFilter lp = new LmeFilter(LP2_B, LP2_A);
-    private LmeFilter hp = new LmeFilter(HP2_B, HP2_A);
-    private LmeFilter notch = new LmeFilter(NOTCH_B,NOTCH_A);
-    private LmeFilter.WndIntFilter meanw = new LmeFilter.WndIntFilter(5);
-//    ...........................................................................................
-
     //    Inizializzazione oggetti per il Pan Tompkins ..............................................
     private PanTompkins pan = new PanTompkins(SEW_SAMPLING_RATE);
     private ToneGenerator toneG;
@@ -109,9 +88,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     private Thread thread2;
     private Thread thread3;
 //    ............................................................................................
-
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -206,13 +182,9 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
             @Override
             public void run() {
                 Log.v("Runnables", "setupRunnable Started");
-
-//                setupChart(chart);
                 setupChart(chart);
                 setupSensor(getApplicationContext());
                 runDataStreamThread();
-
-
             }
         };
         setupThread = new Thread(new Runnable() {
@@ -225,15 +197,11 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                     Thread.sleep(0);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
-
                 }
             }
 
         });
-
         setupThread.start();
-
-
     }
 
     private void feedMultiple1() {
@@ -244,7 +212,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
             @Override
             public void run() {
                 Log.v("Runnables", "FeedMultiple1 Started");
-
                 out = new float[size];
                 for (int s = 0; s < size; s++) {
                     complexArray[s] = new Complex((double) in[s], 0);
@@ -254,8 +221,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                     out[z] = (float) fftOut[z].abs();
                 }
                 setData(chart,out,size);
-
-
             }
         };
         thread1 = new Thread(new Runnable() {
@@ -295,8 +260,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                     out[z] = (float) fftOut[z].phase();
                 }
                 setData(chart,out,size2);
-
-
             }
         };
 
@@ -329,7 +292,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                         boolean stream = isInStreaming(sewDevice);
                         start = System.nanoTime();
                         RegularDataBlock[] rdbs;
-
                         while (stream && canStream) {
                             rdbs = (RegularDataBlock[]) sewDevice.getDataBlocks();
 
@@ -381,7 +343,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                     buffered = true;
                     value0=pan.highpass.next(pan.lowpass.next(value));
 //                    Log.v("valuexxx: ",  String.valueOf(value0));
-//                  value0=pan.next(value,(long) time);
                     runOnUiThread(new Runnable() {
                         public void run() {
                             changeTimeSizeTextView(String.valueOf(visibility_range));
@@ -405,7 +366,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                             changeTimeSize2TextView(String.valueOf(visibility_range2));
                         }
                     });
-
                     c++;
                     break;
                 case 2:
@@ -440,16 +400,11 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                     buffered = true;
                     value0=pan.next(value, (long) time);
                     peakDetector2(value0,200,c);
-//                    setDataScat(chart,value0,visibility_range);
-//                  value0=pan.next(value,(long) time);
-
                     c++;
                     break;
                 default:
                     buffered = true;
-//                    feedMultiple0();
                     value0=pan.highpass.next(pan.lowpass.next(value));
-//                  value0=pan.next(value,(long) time);
                     setData0(chart,value0,visibility_range);
                     break;
             }
@@ -459,6 +414,7 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     }
 
     int countp=0;
+
     public void peakDetector(float in, float delta,int count){
         if (count==0){
             max=-100000;
@@ -480,15 +436,12 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
         if(lookfor){
             if (in<max-delta){
                 setPoincareData(chart,poincareValue,0,visibility_range2);
-
                 min=in;
                 lookfor=false;
             }else{
                 setPoincareData(chart,poincareValue,0,visibility_range2);
 
             }
-
-
         }else{
             if (in>min+delta && in<600){
                 rpeaktime=timepeakdetector;
@@ -504,8 +457,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
                 lookfor=true;
                 toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 200);
                 setPoincareData(chart,poincareValue,in,visibility_range2);
-
-
             }else{
                 setPoincareData(chart,poincareValue,0,visibility_range2);
             }
@@ -720,7 +671,6 @@ public class realTimeAnalysisActivity extends AppCompatActivity implements Adapt
     protected void onPause() {
         Log.v("Actlif", "onPause Called");
         super.onPause();
-
         c=0;
     }
 

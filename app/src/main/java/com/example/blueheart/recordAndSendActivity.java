@@ -106,7 +106,6 @@ public class recordAndSendActivity extends AppCompatActivity {
     private PanTompkins pan = new PanTompkins(SEW_SAMPLING_RATE);
     private float poincareValue = 0;
 
-
     private double rpeaktime;
     private double peaktimevector[]=new double[500];
     private double diffvector[]=new double[500];
@@ -117,10 +116,7 @@ public class recordAndSendActivity extends AppCompatActivity {
     private int diff_indx=0;
     private int visibility_range = 1024;
     DecimalFormat numberFormat = new DecimalFormat("#00.00000");
-
     private double sd1,sd2,S;
-
-
 
     private int STORAGE_PERMISSION_CODE = 1;
     private boolean onSave;
@@ -128,9 +124,6 @@ public class recordAndSendActivity extends AppCompatActivity {
     private int i;
     public String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/bluheart";
     List<Double> vallist = new ArrayList<Double>();
-
-
-
 
     private FirebaseAuth firebaseAuth;
 
@@ -163,9 +156,6 @@ public class recordAndSendActivity extends AppCompatActivity {
         }
 
 
-
-
-
         startb.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -181,11 +171,8 @@ public class recordAndSendActivity extends AppCompatActivity {
                 onSave=false;
                 i=0;
                 writeFile2();
-
-
             }
         });
-
 
         firebaseAuth=FirebaseAuth.getInstance();
 
@@ -194,8 +181,6 @@ public class recordAndSendActivity extends AppCompatActivity {
         send.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-
 
                 if (mChatService.getState()!=BluetoothChatService.STATE_CONNECTED) {
                     Intent serverIntent = new Intent(getApplicationContext(), DeviceListActivity2.class);
@@ -207,7 +192,6 @@ public class recordAndSendActivity extends AppCompatActivity {
 
             }
         });
-
 
     }
 
@@ -226,8 +210,6 @@ public class recordAndSendActivity extends AppCompatActivity {
                 setupChart(chart);
                 setupSensor(getApplicationContext());
                 runDataStreamThread();
-
-
             }
         };
         setupThread = new Thread(new Runnable() {
@@ -247,8 +229,6 @@ public class recordAndSendActivity extends AppCompatActivity {
         });
 
         setupThread.start();
-
-
     }
 
     private void setupChat() {
@@ -373,35 +353,24 @@ public class recordAndSendActivity extends AppCompatActivity {
             countp=0;
             peaktimevector=new double[500];
             diff_indx=0;
-
-
-
-//            for (int i=0;i<peaktimevector.length;i++) {
-//                Log.v("Timing", "Peak Time Vector" + "------------" + String.valueOf(peaktimevector[i]));
-//            }
-
         }
-//        timepeakdetector=(System.nanoTime() - startPeaks) / 1_000_000_000.0000000;
+
         Log.v("Time","Current peak detector time"+String.valueOf(timepeakdetector));
         if (in>max){max=in;}
         if (in<min){min=in;}
         if(lookfor){
             if (in<max-delta){
                 setPoincareData(chart,poincareValue,0,visibility_range);
-
                 min=in;
                 lookfor=false;
             }else{
                 setPoincareData(chart,poincareValue,0,visibility_range);
 
             }
-
-
         }else{
             if (in>min+delta && in<600){
                 timepeakdetector=(System.nanoTime() - startPeaks) / 1_000_000_000.0000000;
                 rpeaktime=timepeakdetector;
-//                Log.v("Timing","Current peak time"+"------------"+String.valueOf(timepeakdetector));
                 peaktimevector[countp]=rpeaktime;
 
                 if(countp>=1){
@@ -428,15 +397,12 @@ public class recordAndSendActivity extends AppCompatActivity {
                         });
 
                         if (onSave){
-//                            val[i]=sd1;
                             vallist.add(diffvector[diff_indx]);
                             vallist.add(sd1);
                             vallist.add(sd2);
                             vallist.add(S);
-
                             i++;
                         }
-
                         diff_indx++;
                     }
                 }
@@ -445,12 +411,8 @@ public class recordAndSendActivity extends AppCompatActivity {
                 lookfor=true;
                 toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 200);
                 setPoincareData(chart,poincareValue,in,visibility_range);
-
-
-
             }else{
                 setPoincareData(chart,poincareValue,0,visibility_range);
-
             }
         }
     }
@@ -721,17 +683,6 @@ public class recordAndSendActivity extends AppCompatActivity {
                 Logout();
                 return true;
             }
-//            case R.id.insecure_connect_scan: {
-//                // Launch the DeviceListActivity2 to see devices and do scan
-//                Intent serverIntent = new Intent(getApplicationContext(), DeviceListActivity2.class);
-//                startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE_INSECURE);
-//                return true;
-//            }
-//            case R.id.discoverable: {
-//                // Ensure this device is discoverable by others
-//                ensureDiscoverable();
-//                return true;
-//            }
         }
         return false;
     }
@@ -794,7 +745,6 @@ public class recordAndSendActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-
         // Performing this check in onResume() covers the case in which BT was
         // not enabled during onStart(), so we were paused to enable it...
         // onResume() will be called when ACTION_REQUEST_ENABLE activity returns.

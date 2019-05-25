@@ -3,17 +3,11 @@ package com.example.blueheart;
 
 import android.graphics.Color;
 import android.util.Log;
-import android.view.View;
-import android.widget.Toast;
-
-import com.github.mikephil.charting.charts.CombinedChart;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.charts.ScatterChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
-import com.github.mikephil.charting.data.CombinedData;
-import com.github.mikephil.charting.data.DataSet;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
@@ -24,41 +18,12 @@ import com.github.mikephil.charting.interfaces.datasets.IScatterDataSet;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.PointsGraphSeries;
-
 import java.util.ArrayList;
 
-import static android.content.ContentValues.TAG;
-import static com.example.blueheart.utilities.*;
 
 
 public class graphUtilities {
 
-
-
-
-    public static void removeDataSet(LineChart mLineChart) {
-
-        LineData data = mLineChart.getData();
-
-        if (data != null) {
-            data.removeDataSet(data.getDataSetByIndex(data.getDataSetCount() - 1));
-            mLineChart.notifyDataSetChanged();
-            mLineChart.invalidate();
-        }
-    }
-
-    public static void removeDataSet1(LineChart mLineChart) {
-
-        LineData data = mLineChart.getData();
-
-        if (data != null) {
-
-            data.removeDataSet(data.getDataSetByIndex(1));
-
-            mLineChart.notifyDataSetChanged();
-            mLineChart.invalidate();
-        }
-    }
 
     public static void setupChart(LineChart mychart) {
 
@@ -79,42 +44,6 @@ public class graphUtilities {
 //        chart.getXAxis().setDrawAxisLine(false);
         mychart.getXAxis().setTextColor(Color.WHITE);
         LineData data = new LineData();
-        mychart.setData(data);
-
-        XAxis xl = mychart.getXAxis();
-        xl.setTextColor(Color.WHITE);
-        xl.setDrawGridLines(false);
-        xl.setAvoidFirstLastClipping(true);
-        xl.setEnabled(true);
-
-        YAxis leftAxis = mychart.getAxisLeft();
-        leftAxis.setTextColor(Color.BLACK);
-        leftAxis.setDrawGridLines(true);
-
-        YAxis rightAxis = mychart.getAxisRight();
-        rightAxis.setEnabled(false);
-
-    }
-
-    public static void setupScatterChart(ScatterChart mychart) {
-
-//        mychart = mychart.findViewById(id);
-        mychart.setDrawGridBackground(false);
-        // no description text
-        mychart.getDescription().setEnabled(false);
-        // enable touch gestures
-        mychart.setTouchEnabled(true);
-        // enable scaling and dragging
-        mychart.setDragEnabled(true);
-        mychart.setScaleEnabled(true);
-        // if disabled, scaling can be done on x- and y-axis separately
-        mychart.setPinchZoom(true);
-        mychart.getAxisLeft().setDrawGridLines(false);
-        mychart.getAxisRight().setEnabled(false);
-//        chart.getXAxis().setDrawGridLines(false);
-//        chart.getXAxis().setDrawAxisLine(false);
-        mychart.getXAxis().setTextColor(Color.WHITE);
-        ScatterData data = new ScatterData();
         mychart.setData(data);
 
         XAxis xl = mychart.getXAxis();
@@ -227,63 +156,6 @@ public class graphUtilities {
         }
     }
 
-    public static void setDataScat(ScatterChart chart, float currentrrdistance, float nextrrdistance, int visibility) {
-
-        ScatterData data = chart.getData();
-        if (data != null) {
-            IScatterDataSet set = data.getDataSetByIndex(0);
-//            Log.v("sett",set.getLabel());
-            if (set== null) {
-//                set.clear();
-//                data.removeDataSet(0);
-                set = createSetscat();
-//                set.addEntry(new Entry(currentrrdistance,nextrrdistance ));
-                data.addDataSet(set);
-//                data.notifyDataChanged();
-//                chart.notifyDataSetChanged();
-//                YAxis leftAxis = chart.getAxisLeft();
-//
-//                leftAxis.setAxisMaximum(30f);
-//                leftAxis.setAxisMinimum(-30f);
-//
-////            XAxis xAxis=chart.getXAxis();
-//                // limit the number of visible entries
-//                chart.setVisibleXRangeMaximum(visibility);
-//
-//                // move to the latest entry
-//                chart.moveViewToX(data.getEntryCount());
-//
-//                Legend l = chart.getLegend();
-//                l.setEnabled(false);
-
-
-            }
-            data.addEntry(new Entry(currentrrdistance,nextrrdistance  ), 0);
-            data.notifyDataChanged();
-
-            // let the chart know it's data has changed
-            chart.notifyDataSetChanged();
-
-            YAxis leftAxis = chart.getAxisLeft();
-
-            leftAxis.setAxisMaximum(30f);
-            leftAxis.setAxisMinimum(-30f);
-
-//            XAxis xAxis=chart.getXAxis();
-            // limit the number of visible entries
-            chart.setVisibleXRangeMaximum(30);
-
-            // move to the latest entry
-//            chart.moveViewToX(data.getEntryCount());
-            chart.invalidate();
-
-            Legend l = chart.getLegend();
-            l.setEnabled(false);
-
-
-        }
-
-    }
 
     public static void setData(LineChart chart,float[] in,int size) {
 

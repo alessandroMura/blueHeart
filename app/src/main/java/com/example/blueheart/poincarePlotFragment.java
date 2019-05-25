@@ -16,13 +16,11 @@ public class poincarePlotFragment extends Fragment implements View.OnClickListen
 
     View v;
     public TextView pSD1,pSD2,pS;
-
     Button plusb;
     Button minusb;
     TextView samples_number;
     parameterSend lag_size;
     int lag=1;
-
 
     public poincarePlotFragment(){
 

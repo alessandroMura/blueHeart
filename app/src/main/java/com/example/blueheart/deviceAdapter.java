@@ -28,6 +28,7 @@ public class deviceAdapter extends ArrayAdapter<BluetoothDevice> {
 
         BluetoothDevice currentDevice = getItem(position);
         TextView deviceText = listItemView.findViewById(R.id.item_button);
+
         if (currentDevice != null) {
             deviceText.setText(currentDevice.getName());
         }
